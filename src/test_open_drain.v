@@ -24,7 +24,7 @@
 
 module open_drain_pin
   #(
-    parameter tick_interval = 20000
+    parameter tick_interval = 32'd27000000
     )
   (
    input      clk_i,
@@ -33,55 +33,51 @@ module open_drain_pin
    input      listen_first_i,
 
    output led_recv_o,
-   output reg led_done_o = 0,
+   output reg led_done_o = 1'b1,
    
    inout      pin_io
    );
 
-   localparam INIT = 3'd0;
-   localparam LISTEN = 3'd1;
-   localparam REPORT = 3'd2;
-   localparam TALK = 3'd3;
-   localparam IDLE = 3'd4;
+   localparam INIT = 2'd0;
+   localparam LISTEN = 2'd1;
+   localparam TALK = 2'd2;
+   localparam IDLE = 2'd3;
    
-   reg [2:0] state = INIT;
-   reg [3:0] listen_counter = 3'd0;
-   reg [12:0] tick_counter = 12'd0;
+   reg [1:0] state = INIT;
+   reg [2:0] listen_counter = 2'd0;
+   reg [32:0] tick_counter = 32'd0;
    reg [3:0]  talk_counter = 4'd0;
 
    reg 	      pin_r = 1'bz;
 
    assign pin_io = pin_r;
-   assign led_recv_o = ~pin_io & (state == LISTEN);
-   
-   always @(negedge pin_io) begin
-      if (state == LISTEN) begin
-	 listen_counter <= listen_counter + 1'b1;
-      end
-      
-   end
+   assign led_recv_o = pin_io;
    
    always @(posedge clk_i or negedge rst_ni) begin
       if (~rst_ni) begin
+	 state <= INIT;
       end else
 	case(state)
 	  INIT: begin
-	     led_done_o <= 0;
+	     led_done_o <= 1'b1;
+	     tick_counter <= 32'b0;
+	     talk_counter <= 3'd0;
+	     pin_r <= 1'bZ;
 	     state <= (listen_first_i) ? LISTEN : TALK;
 	  end
 	  
 	  LISTEN: begin
-	     if (listen_counter >= 5 && pin_io) begin
-		state <= listen_first_i ? TALK : IDLE;
-		led_done_o <= 1'b1;
+	     if ((listen_counter >= 5) && pin_io ) begin
+		state <= (listen_first_i) ? TALK : IDLE;
+		led_done_o <= 1'b0;
 	     end
 	  end
-	  REPORT: begin
+	  IDLE: begin
 	  end
 	  TALK: begin
 	     if (talk_counter >= 5) begin
 		pin_r <= 1'bZ;
-		state <= listen_first_i ? IDLE : LISTEN;
+		state <= (listen_first_i) ? IDLE : LISTEN;
 	     end else begin
 		if (tick_counter < tick_interval / 2) begin
 		   pin_r <= 1'bZ;
@@ -91,7 +87,7 @@ module open_drain_pin
 		   tick_counter <= tick_counter + 1'b1;
 		end else begin
 		   talk_counter <= talk_counter + 1'b1;
-		   tick_counter <= 12'd0;
+		   tick_counter <= 32'd0;
 		end
 	     end
 	  end	    
@@ -99,12 +95,23 @@ module open_drain_pin
 	  endcase
    
    end
+
+   always @(negedge pin_io or negedge rst_ni) begin
+      if (!rst_ni)
+	listen_counter <= 2'b0;
+      
+      else
+	case(state)
+	  LISTEN: listen_counter <= listen_counter + 1'b1;
+	  default: listen_counter <= 2'b0;
+	endcase // case (state)
+   end
    
 endmodule // open_drain_pin
 
-module open_drain_test 
+module test_open_drain
   #(
-    parameter tick_interval = 20000
+    parameter tick_interval = 32'd27000000
     )
 (
  input clk_i,

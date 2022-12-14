@@ -17,7 +17,7 @@ module i2c_tb
    wire led_done_1;
    wire led_done_2;
    
-   open_drain_test #(
+   test_open_drain #(
 		     .tick_interval(10)
 		     ) odt (
 			    .clk_i(clk_r),
