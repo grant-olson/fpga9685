@@ -25,34 +25,34 @@ module i2c
    reg [6:0] address;
    reg 	     rw;
 
-   always @(negedge rst_ni) begin
-      state <= PREP;
-      address <= 6'd0;
-   end
-   
-   always @(posedge scl_i) begin
-      case (state)
-	PREP: begin
-	   counter <= 0;
-	   state <= RECV_DEV_ADDR;
+   always @(posedge scl_i or negedge rst_ni) begin
+      if (~rst_ni) begin
+	 state <= PREP;
+	 address <= 6'd0;
+      end else
+	
+	case (state)
+	  PREP: begin
+	     counter <= 0;
+	     state <= RECV_DEV_ADDR;
 	   
-	end
-	RECV_DEV_ADDR: begin
-	   address <= {address[5:0], sda_io};
+	  end
+	  RECV_DEV_ADDR: begin
+	     address <= {address[5:0], sda_io};
 
-	   if (counter >= 5) state <= RECV_RW;
-	   else counter <= counter + 1'b1;
-	end
+	     if (counter >= 5) state <= RECV_RW;
+	     else counter <= counter + 1'b1;
+	  end
 
-	RECV_RW: begin
-	   rw <= sda_io;
-	   state <= IGNORE;
-	end
+	  RECV_RW: begin
+	     rw <= sda_io;
+	     state <= IGNORE;
+	  end
 
-	IGNORE: state <= IGNORE;
+	  IGNORE: state <= IGNORE;
 	
 	
-      endcase // case (state)
+	endcase // case (state)
    end
 
 endmodule // i2c
