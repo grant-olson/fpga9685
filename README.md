@@ -14,7 +14,7 @@ working system, the Makefile does not attempt to automate this.
 To run a test run `make *module_name*_gtk`. This should figure
 everything out and open the results in `gtkwave` for your review.
 
-## I2C SDA Note
+## I2C SDA Open Drain Test
 
 The I2C SDA line is an **open-drain** configuration to allow both
 client and server to control the bus. The line rests at a state of 1
@@ -32,5 +32,14 @@ configured your FPGA correctly the RECV LEDs will show activity, and
 the DONE LEDs will show that both pins counted five LOW states while
 listening.
 
-After that use the settings used on the test pins for the SDA line
-when building the full project.
+When choosing pins for this test be sure to use pins that are NOT
+hooked up to any other capacitors/resistors/ICs/components that allow
+different peripherals to use the GPIO pins. The author wasted a day
+and much confusion after using pins 68 and 69 on his Tang Nano
+9K. These are also attached to a HDMI output voltage matching network
+that broke the open drain functionality in very confusing and
+unpredictable ways.
+
+After testing successfully use the settings used on the test pins for
+the SDA line when building the full project.
+

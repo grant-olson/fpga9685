@@ -44,9 +44,7 @@ module open_drain_pin
    localparam IDLE = 3'd3;
    localparam WAIT = 3'd4;
    
-   
    reg [2:0]  state = INIT;
-
    
    reg [3:0] listen_counter = 4'b0000;
    
@@ -55,20 +53,6 @@ module open_drain_pin
 
    reg 	      pin_r = 1'bz;
 
-   reg 	      last_pin_io = 1'b1;
-	      
-   
-   initial begin
-      state <= INIT;
-//      listen_counter <= 4'd0;
-      tick_counter <= 32'd0;
-      talk_counter <= 4'd0;
-      pin_r <= 1'bz;
-      last_pin_io <= 1'b0;
-      led_done_o <= 1'b0;
-      
-   end
-   
    assign pin_io = pin_r;
    assign led_recv_o = pin_io;
    
@@ -76,24 +60,20 @@ module open_drain_pin
       if (~rst_ni) begin
 	 state <= INIT;
 	 tick_counter <= 32'd0;
-	 listen_counter <= 4'd0;
 	 talk_counter <= 4'd0;
 	 pin_r <= 1'bz;
-	 last_pin_io <= 1'b0;
-	 
+	 led_done_o <= 1'b1;
       end else begin
-	last_pin_io <= pin_io;
 	case(state)
 	  INIT: begin
 	     led_done_o <= 1'b1;
 	     tick_counter <= 32'b0;
 	     talk_counter <= 4'd0;
-	     listen_counter <= 4'd0;
 	     
 	     pin_r <= 1'bz;
 	     state <= WAIT;
-	     
 	  end
+
 	  WAIT: begin 
 	     tick_counter <= tick_counter + 1'b1;
 	     
@@ -107,9 +87,6 @@ module open_drain_pin
 	     if (listen_counter >= 4'd5) begin
 		state <= (listen_first_i) ? TALK : IDLE;
 		led_done_o <= 1'b0;
-	     end
-	     else if ((pin_io == 1'b1) && (last_pin_io == 1'b0)) begin
-		listen_counter <= listen_counter + 1'b1;
 	     end
 	  end
 
@@ -138,7 +115,15 @@ module open_drain_pin
       end // else: !if(~rst_ni)
       
    
+   end // always @ (posedge clk_i or negedge rst_ni)
+
+
+   // Increment listen counter
+   always @(posedge pin_io or negedge rst_ni) begin
+      if (~rst_ni) listen_counter <= 4'b0;
+      else if (state == LISTEN) listen_counter <= listen_counter + 1'b1;
    end
+   
 
 endmodule // open_drain_pin
 
