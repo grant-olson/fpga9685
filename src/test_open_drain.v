@@ -48,10 +48,10 @@ module open_drain_pin
    reg [2:0]  state = INIT;
 
    
-   reg [2:0] listen_counter = 3'b000;
+   reg [3:0] listen_counter = 4'b0000;
    
-   reg [32:0] tick_counter = 32'd0;
-   reg [2:0]  talk_counter = 3'b000;
+   reg [31:0] tick_counter = 32'd0;
+   reg [3:0]  talk_counter = 4'b0000;
 
    reg 	      pin_r = 1'bz;
 
@@ -60,11 +60,12 @@ module open_drain_pin
    
    initial begin
       state <= INIT;
-      listen_counter <= 3'd0;
+//      listen_counter <= 4'd0;
       tick_counter <= 32'd0;
-      talk_counter <= 3'd0;
+      talk_counter <= 4'd0;
       pin_r <= 1'bz;
       last_pin_io <= 1'b0;
+      led_done_o <= 1'b0;
       
    end
    
@@ -75,8 +76,8 @@ module open_drain_pin
       if (~rst_ni) begin
 	 state <= INIT;
 	 tick_counter <= 32'd0;
-	 listen_counter <= 3'd0;
-	 talk_counter <= 3'd0;
+	 listen_counter <= 4'd0;
+	 talk_counter <= 4'd0;
 	 pin_r <= 1'bz;
 	 last_pin_io <= 1'b0;
 	 
@@ -86,8 +87,8 @@ module open_drain_pin
 	  INIT: begin
 	     led_done_o <= 1'b1;
 	     tick_counter <= 32'b0;
-	     talk_counter <= 3'd0;
-	     listen_counter <= 3'd0;
+	     talk_counter <= 4'd0;
+	     listen_counter <= 4'd0;
 	     
 	     pin_r <= 1'bz;
 	     state <= WAIT;
@@ -95,7 +96,7 @@ module open_drain_pin
 	  end
 	  WAIT: begin 
 	     tick_counter <= tick_counter + 1'b1;
-
+	     
 	     if (tick_counter >= tick_interval) begin
 		state <= (listen_first_i) ? LISTEN : TALK;
 		tick_counter <= 32'd0;
@@ -103,7 +104,7 @@ module open_drain_pin
 	  end
 	  
 	  LISTEN: begin
-	     if (listen_counter >= 3'd5) begin
+	     if (listen_counter >= 4'd5) begin
 		state <= (listen_first_i) ? TALK : IDLE;
 		led_done_o <= 1'b0;
 	     end
@@ -115,17 +116,14 @@ module open_drain_pin
 	  IDLE: begin
 	  end
 	  TALK: begin
-	     if (talk_counter >= 3'd5) begin
+	     if (talk_counter >= 4'd5) begin
 		pin_r <= 1'bz;
 		state <= (listen_first_i) ? IDLE : LISTEN;
 		tick_counter <= 32'd0;
-		
 	     end else begin
-		if (tick_counter < tick_interval / 2'd2) begin
-		   pin_r <= 1'bz;
-		   tick_counter <= tick_counter + 1'b1;
-		end else if (tick_counter < tick_interval) begin
-		   pin_r <= 1'b0;
+		if (tick_counter < tick_interval) begin
+		   if (tick_counter < tick_interval / 2) pin_r <= 1'bz;
+		   else pin_r <= 1'b0;
 		   tick_counter <= tick_counter + 1'b1;
 		end else begin
 		   pin_r <= 1'bz;
@@ -133,7 +131,8 @@ module open_drain_pin
 		   tick_counter <= 32'd0;
 		end
 	     end
-	  end	    
+	  end // case: TALK
+	  default: state <= state;
 	  
 	endcase // case (state)
       end // else: !if(~rst_ni)
