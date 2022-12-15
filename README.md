@@ -34,10 +34,10 @@ listening.
 
 When choosing pins for this test be sure to use pins that are NOT
 hooked up to any other capacitors/resistors/ICs/components that allow
-different peripherals to use the GPIO pins. The author wasted a day
-and much confusion after using pins 68 and 69 on his Tang Nano
-9K. These are also attached to a HDMI output voltage matching network
-that broke the open drain functionality in very confusing and
+different peripherals on your board to share the GPIO pins. The author
+wasted a day and much confusion after using pins 68 and 69 on his Tang
+Nano 9K. These are also attached to a HDMI output voltage matching
+network and broke the open drain functionality in very confusing and
 unpredictable ways.
 
 After testing successfully use the settings used on the test pins for
