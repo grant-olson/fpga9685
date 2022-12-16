@@ -1,4 +1,4 @@
-module i2c
+module i2c_target
   (
    input clk_i,
    input rst_ni,

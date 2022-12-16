@@ -1,6 +1,6 @@
 `timescale 1ns/1ns
 
-module i2c_tb
+module i2c_target_tb
   (
    );
 
@@ -14,7 +14,7 @@ module i2c_tb
    
    always #1 clk_r = ~clk_r;
 
-   i2c i2c1 (
+   i2c_target i2c1 (
 	     .clk_i(clk_r),
 	     .rst_ni(rst_nr),
 
@@ -65,7 +65,7 @@ module i2c_tb
    end
 
    initial begin
-      $dumpfile("output/i2c_dump.vcd");
+      $dumpfile("output/i2c_target_dump.vcd");
       $dumpvars(2);
    end
    
