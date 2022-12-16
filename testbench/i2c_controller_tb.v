@@ -35,7 +35,7 @@ module i2c_controller_tb
 		      
 		      .execute_i(trigger),
 
-		      .scl_ro(scl),
+		      .scl_o(scl),
 		      .sda_io(sda),
 		      .busy_o(busy)
 		      );
