@@ -46,12 +46,12 @@ module i2c_controller_tb
       #1 rst_nr <= 0;
       #1 rst_nr <= 1;
 
-      $display("Sending Data...");
+      $display("Reading Data...");
       
       address <= 7'b1111000;
-      rw <= 1'b0;
+      rw <= 1'b1;
       register <= 8'b00001111;
-      data_in_r <= 8'b01010101;
+      data_in_r <= 8'b00000000;
       
       #1 trigger <= 1;
       #5 trigger <= 0;
@@ -59,8 +59,8 @@ module i2c_controller_tb
       wait(busy == 1'b0);
       
       $display("Getting Data");
-      #1 rw <= 1'b1;
-      data_in_r <= 8'b00000000;
+      #1 rw <= 1'b0;
+      data_in_r <= 8'b01010101;
 
       #1 trigger <= 1;
       #5 trigger <= 0;

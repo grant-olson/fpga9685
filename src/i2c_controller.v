@@ -31,7 +31,11 @@ module i2c_controller
    localparam SEND_ACK = 4'd6;
    localparam SEND_NACK = 4'd7;
    localparam STOP = 4'd8;
-
+   localparam READ_BIT = 4'd9;
+   
+   localparam READ = 1'b1;
+   localparam WRITE = 1'b1;
+   
    reg [23:0] 	    buffer;
 
    reg [3:0] 	    state = WAIT; 
@@ -112,6 +116,26 @@ module i2c_controller
 	   
 	end // case: FINALIZE_BIT
 
+	READ_BIT: begin
+	   tick_counter <= tick_counter + 1'b1;
+	   if (tick_counter < ticks / 2 - 1) scl_r <= 1'bz;
+	   else if (tick_counter < ticks / 2) begin
+	      data_o[6:0] <= data_o[7:1];
+	      data_o[7] <= sda_io;
+	      bits_sent <= bits_sent + 1'b1;
+	      if (bits_sent >= 7) state <= GET_ACK;
+	   end
+	   else if (tick_counter < ticks - 2) scl_r <= 1'b0;
+	   else begin
+	      tick_counter <= 16'b0;
+	      
+	      scl_r <= 1'bz;
+	   end
+	   
+	   
+	end
+	
+	
 	GET_ACK: begin
 	   tick_counter <= tick_counter + 1'b1;
 	   
@@ -121,7 +145,13 @@ module i2c_controller
 	   
 	   else if (tick_counter >= ticks - 1) begin
 
-	      if (bytes_sent >= 2) begin
+	      if (bytes_sent == 1 && buffer[16] ) begin
+		 tick_counter <= 16'd0;
+		 state <= READ_BIT;
+		 bits_sent <= 4'd0;
+		 bytes_sent <= bytes_sent + 1'b1;
+		 
+	      end else if(bytes_sent >= 2) begin
 		 tick_counter <= 16'd0;
 		 state <= STOP;
 	      end else begin
