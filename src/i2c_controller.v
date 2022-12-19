@@ -87,23 +87,23 @@ module i2c_controller
 	end
 	
 	LOAD_BIT: begin
-	   scl_r <= 1'bz;
+	   scl_r <= 1'b0;
 	   tick_counter <= tick_counter + 1'b1;
 	   
+	   if (tick_counter >= 1) sda_r <= buffer[23] ? 1'bz : 1'b0 ;
 	   if (tick_counter >= ticks / 2 - 2) state <= SEND_BIT;
-	   else sda_r <= buffer[23] ? 1'bz : 1'b0 ;
 	   
 	end
 
 	SEND_BIT: begin
-	   scl_r <= 1'b0;
+	   scl_r <= 1'bz;
 	   tick_counter <= tick_counter + 1'b1;
 
 	   if (tick_counter >= ticks - 2) state <= FINALIZE_BIT;
 	end
 
 	FINALIZE_BIT: begin
-	   scl_r <= 1'bz;
+	   scl_r <= 1'b1;
 	   buffer[23:1] <= buffer[22:0];
 	   if(bits_sent >= 7) begin // we just sent the eighth.
 	      state <= GET_ACK;

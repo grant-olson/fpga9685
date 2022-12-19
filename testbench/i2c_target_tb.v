@@ -6,15 +6,20 @@ module i2c_target_tb
 
    reg clk_r = 1'b0;
    reg rst_nr = 1'b1;
-   reg scl_r = 1'b1;
-   reg sda_r;
-   wire sda_w;
+   reg scl_r = 1'bz;
+   reg sda_r = 1'bz;
+   
+   wire sda_w, scl_w;
 
    assign sda_w = sda_r;
+   assign scl_w = scl_r;
+   
+   pullup(sda_w);
+   pullup(scl_w);
    
    always #1 clk_r = ~clk_r;
 
-   i2c_target i2c1 (
+   i2c_target i2c_t1 (
 	     .clk_i(clk_r),
 	     .rst_ni(rst_nr),
 
@@ -25,42 +30,46 @@ module i2c_target_tb
 	     .address1_i(1'b0), 
 	     .address0_i(1'b1), 
 
-	     .scl_i(scl_r),
+	     .scl_i(scl_w),
 	     .sda_io(sda_w)
 	
 	     );
 
+   reg 	trigger_r;
+   wire busy;
+   
+   i2c_controller i2c_c1 (
+		      .clk_i(clk_r),
+		      .rst_ni(rst_nr), 
+		      .address_i(7'b1001111),
+		      .rw_i(1'b1),
+		      .register_i(8'hBE),
+		      .data_i(8'hEE),
+		      .data_o(),
+		      
+		      .execute_i(trigger_r),
+
+		      .scl_o(scl_w),
+		      .sda_io(sda_w),
+		      .busy_o(busy)
+		      );
+   
+
+   
    initial begin
       $display("Starting Testbench...");
       #1 rst_nr <= 1;
       #1 rst_nr <= 0;
       #1 rst_nr <= 1;
 
-      $display("Sending address...");
+      #5 trigger_r <= 0;
+      #1 trigger_r <= 1;
+      #5 trigger_r <= 0;
 
-      #1 sda_r <= 1;
+      wait(busy == 1'b0);
       
       
-      #1 scl_r <= 0;
-      #1 scl_r <= 1;
-      #1 scl_r <= 0;
-      #1 scl_r <= 1;
-      #1 scl_r <= 0;
-      #1 scl_r <= 1;
-      #1 scl_r <= 0;
-      #1 scl_r <= 1;
-      #1 scl_r <= 0;
-      #1 scl_r <= 1;
-      #1 scl_r <= 0;
-      #1 scl_r <= 1;
-      #1 scl_r <= 0;
-      #1 scl_r <= 1;
-      #1 scl_r <= 0;
-      #1 scl_r <= 1;
-      
-
-      
-      #40;
+      #200;
       $finish();
    end
 
