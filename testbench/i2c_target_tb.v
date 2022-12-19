@@ -37,14 +37,20 @@ module i2c_target_tb
 
    reg 	trigger_r;
    wire busy;
+
+
+   reg [6:0] c1_address_r = 7'h48;
+   reg 	     c1_rw_r = 1'b1;
+   reg [7:0] c1_register_r = 8'hBE;
+   reg [7:0] c1_value_r = 8'hEE;
    
    i2c_controller i2c_c1 (
 		      .clk_i(clk_r),
 		      .rst_ni(rst_nr), 
-		      .address_i(7'b1001111),
-		      .rw_i(1'b1),
-		      .register_i(8'hBE),
-		      .data_i(8'hEE),
+		      .address_i(c1_address_r),
+		      .rw_i(c1_rw_r),
+		      .register_i(c1_register_r),
+		      .data_i(c1_value_r),
 		      .data_o(),
 		      
 		      .execute_i(trigger_r),
@@ -67,9 +73,19 @@ module i2c_target_tb
       #5 trigger_r <= 0;
 
       wait(busy == 1'b0);
-      
-      
-      #200;
+
+      #1 c1_address_r <= 7'b0110111;
+      c1_register_r <= 8'hDE;
+      c1_rw_r <= 1'b0;
+      c1_value_r <= 8'h4D;
+
+      #5 trigger_r <= 0;
+      #1 trigger_r <= 1;
+      #5 trigger_r <= 0;
+
+      wait(busy == 1'b0);
+
+      #400;
       $finish();
    end
 

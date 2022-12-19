@@ -31,13 +31,14 @@ module i2c_controller
    localparam SEND_ACK = 4'd6;
    localparam SEND_NACK = 4'd7;
    localparam STOP = 4'd8;
-   localparam READ_BIT = 4'd9;
+   localparam RETRIEVE_BIT = 4'd9;
    
    localparam READ = 1'b1;
    localparam WRITE = 1'b1;
    
    reg [23:0] 	    buffer;
-
+   reg 		    rw_r;
+   
    reg [3:0] 	    state = WAIT; 
    
    reg [3:0] 	    bits_sent;
@@ -62,6 +63,9 @@ module i2c_controller
 		buffer[16] <= rw_i;
 		buffer[15:8] <= register_i;
 		buffer[7:0] <= data_i;
+
+		// Save independently since we shift bits out of buffer.
+		rw_r <= rw_i; 
 		
 		bits_sent <= 4'd0;
 		bytes_sent <= 3'd0;
@@ -116,14 +120,16 @@ module i2c_controller
 	   
 	end // case: FINALIZE_BIT
 
-	READ_BIT: begin
+	// READ bit in from CLIENT to WRITE to REGISTER
+	// Come up with a better name.
+	RETRIEVE_BIT: begin
 	   tick_counter <= tick_counter + 1'b1;
 	   if (tick_counter < ticks / 2 - 1) scl_r <= 1'bz;
 	   else if (tick_counter < ticks / 2) begin
 	      data_o[6:0] <= data_o[7:1];
 	      data_o[7] <= sda_io;
 	      bits_sent <= bits_sent + 1'b1;
-	      if (bits_sent >= 7) state <= GET_ACK;
+	      if (bits_sent > 7) state <= GET_ACK;
 	   end
 	   else if (tick_counter < ticks - 2) scl_r <= 1'b0;
 	   else begin
@@ -145,9 +151,10 @@ module i2c_controller
 	   
 	   else if (tick_counter >= ticks - 1) begin
 
-	      if (bytes_sent == 1 && buffer[16] ) begin
+	      if (bytes_sent == 1 && ~rw_r ) begin
 		 tick_counter <= 16'd0;
-		 state <= READ_BIT;
+
+		 state <= RETRIEVE_BIT;
 		 bits_sent <= 4'd0;
 		 bytes_sent <= bytes_sent + 1'b1;
 		 

@@ -22,6 +22,7 @@ module i2c_target
    localparam FINALIZE_B1 = 4'd4;
    localparam FINALIZE_B2 = 4'd5;
    localparam FINALIZE_B3 = 4'd6;
+   localparam SEND_BYTE = 4'd7;
    
    reg [3:0] state = IDLE;
    reg [7:0] bit_counter = 0;
@@ -75,6 +76,17 @@ module i2c_target
 	     state <= RECV_BYTE;
 	   
 	  end
+	  
+	  SEND_BYTE: begin
+	     if (scl_posedge) bit_counter <= bit_counter + 1'b1;
+	     else if (scl_negedge && bit_counter > 7) begin
+		byte_counter <= byte_counter + 1'b1;
+		bit_counter <= 1'b0;
+		state <= ACK;
+	     end
+	     
+	  end
+	  
 	  RECV_BYTE: begin
 	     if (scl_posedge) begin
 		buffer_r <= {buffer_r[7:0], sda_io};
@@ -112,10 +124,13 @@ module i2c_target
 	  end
 	  
 	  ACK: begin
-	     if(scl_negedge) begin
+	     if(scl_posedge) begin
 		sda_r <= 1'bz;
 		if(byte_counter > 2) state <= IDLE;
-		else state <= RECV_BYTE;
+		else if (byte_counter > 1 && ~rw_r) begin
+		   state <= SEND_BYTE;
+		   value_r <= 8'b10100101;
+		end else state <= RECV_BYTE;
 		
 	     end else sda_r <= 1'b0;
 	  end
