@@ -71,6 +71,7 @@ module i2c_controller
    localparam WAITING = 8'd0;
    localparam START = 8'd1;
    localparam STOP = 8'd2;
+   
    // External states, we send this clock to targets
    localparam COUNTER = 8'd3; // For testing.
    localparam SEND_ADDRESS = 8'd4;
@@ -203,7 +204,6 @@ module i2c_controller
 	      if (counter_r == 8) begin
 		 state <= GET_ACK;
 		 post_ack_state <= STOP;
-		 register_value_ro <= register_value_out_r;
 		 
 	      end
 	   end
@@ -211,6 +211,16 @@ module i2c_controller
 	   GET_ACK: begin
 	      // For now, assume we're good.
 	      counter_r <= 8'b0;
+
+	      
+	      if (post_ack_state == STOP) begin
+		 sda_r <= 1'b0; // Pull this down so we can release it after stopping clock.
+		 // Send out register value
+		 if (rw_r) register_value_ro <= register_value_out_r;
+	      end
+	      
+
+	      
 	      state <= post_ack_state;
 	   end
 	       

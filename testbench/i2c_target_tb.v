@@ -20,22 +20,17 @@ module i2c_target_tb
    always #1 clk_r = ~clk_r;
 
    i2c_target i2c_t1 (
-	     .clk_i(clk_r),
-	     .rst_ni(rst_nr),
+		      .clk_i(clk_r),
+		      .rst_ni(rst_nr),
 
-	     .address5_i(1'b0), 
-	     .address4_i(1'b0), 
-	     .address3_i(1'b0), 
-	     .address2_i(1'b0), 
-	     .address1_i(1'b0), 
-	     .address0_i(1'b1), 
+		      .assigned_address_i(7'b1111111), 
 
-	     .scl_i(scl_w),
-	     .sda_io(sda_w)
+		      .scl_i(scl_w),
+		      .sda_io(sda_w)
 	
 	     );
 
-   reg 	trigger_r;
+   reg 	trigger_r = 1'b0;
    wire busy;
 
 
@@ -49,9 +44,9 @@ module i2c_target_tb
 		      .rst_ni(rst_nr), 
 		      .address_i(c1_address_r),
 		      .rw_i(c1_rw_r),
-		      .register_i(c1_register_r),
-		      .data_i(c1_value_r),
-		      .data_o(),
+		      .register_id_i(c1_register_r),
+		      .register_value_i(c1_value_r),
+		      .register_value_ro(),
 		      
 		      .execute_i(trigger_r),
 
@@ -68,23 +63,27 @@ module i2c_target_tb
       #1 rst_nr <= 0;
       #1 rst_nr <= 1;
 
-      #5 trigger_r <= 0;
+      $display("Sending READ request...");
+      
       #1 trigger_r <= 1;
-      #5 trigger_r <= 0;
+      wait(busy == 1'b1);
+      #1 trigger_r <= 0;
 
       wait(busy == 1'b0);
 
+/*      $display("Sending WRITE request...");
+      
+      
       #1 c1_address_r <= 7'b0110111;
       c1_register_r <= 8'hDE;
       c1_rw_r <= 1'b0;
-      c1_value_r <= 8'h4D;
 
-      #5 trigger_r <= 0;
       #1 trigger_r <= 1;
-      #5 trigger_r <= 0;
+      wait(busy == 1'b1);
+      #1 trigger_r <= 0;
 
       wait(busy == 1'b0);
-
+*/
       #400;
       $finish();
    end
