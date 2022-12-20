@@ -31,7 +31,7 @@ module i2c_controller_tb
 		      .rw_i(rw),
 		      .register_id_i(register),
 		      .register_value_i(data_in_r),
-		      .register_value_o(data_out),
+		      .register_value_ro(data_out),
 		      
 		      .execute_i(trigger),
 

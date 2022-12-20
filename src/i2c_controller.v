@@ -35,8 +35,8 @@ module i2c_controller
    input [6:0] 	    address_i,
    input 	    rw_i,
    input [7:0] 	    register_id_i,
-   input [7:0] 	    register_value_i,
-   output reg [7:0] register_value_o,
+   input [7:0] 	    register_value_i, // In - writing TO target
+   output reg [7:0] register_value_ro, // out - reading FROM target
 
    input 	    execute_i,
    output 	    busy_o,
@@ -77,7 +77,7 @@ module i2c_controller
    localparam SEND_RW = 8'd5;
    localparam SEND_REGISTER_ID = 8'd6;
    localparam SEND_REGISTER_VALUE = 8'd7;
-   localparam RECV_REGSITER_VALUE = 8'd8;
+   localparam RECV_REGISTER_VALUE = 8'd8;
    localparam GET_ACK = 8'd9;
    localparam NACK = 8'd10;
    
@@ -128,6 +128,12 @@ module i2c_controller
 	      sda_r <= register_value_in_r[7] ? 1'bz : 1'b0;
 	      register_value_in_r <= {register_value_in_r[6:0], 1'b0};
 	   end
+
+	   RECV_REGISTER_VALUE: begin
+	      sda_r <= 1'bz; // Release SDA
+	      counter_r <= counter_r + 1'b1;
+	   end
+	   
 	   
 	   GET_ACK: sda_r <= 1'bz; // Release SDA to Target
 	   
@@ -178,7 +184,9 @@ module i2c_controller
 	   SEND_REGISTER_ID: begin
 	      if (counter_r == 8) begin
 		 state <= GET_ACK;
-		 post_ack_state <= SEND_REGISTER_VALUE;
+		 // LOW RW == WRITE
+		 if(~rw_r) post_ack_state <= SEND_REGISTER_VALUE;
+		 else post_ack_state <= RECV_REGISTER_VALUE;
 	      end
 	   end
 
@@ -186,6 +194,17 @@ module i2c_controller
 	      if (counter_r == 8) begin
 		 state <= GET_ACK;
 		 post_ack_state <= STOP;
+	      end
+	   end
+
+	   RECV_REGISTER_VALUE: begin
+	      register_value_out_r <= {register_value_out_r[6:0], sda_io};
+
+	      if (counter_r == 8) begin
+		 state <= GET_ACK;
+		 post_ack_state <= STOP;
+		 register_value_ro <= register_value_out_r;
+		 
 	      end
 	   end
 
