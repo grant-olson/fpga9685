@@ -13,6 +13,10 @@ module i2c_target
    reg 	     sda_r = 1'bz;
    assign sda_io = sda_r;
 
+   // Track the controller sending start and stop signals
+   // so we aren't sucking in random bits and sticking them
+   // in the wrong slots.
+   // 
    // For now keep this simple but since we're running at
    // 27 Mhz and the clock is < 1 Mhz I imagine we need
    // some debouncing type logic to make sure it's not
@@ -32,6 +36,8 @@ module i2c_target
       last_sda_r <= sda_io;
 
    end
+
+   // And with that out of the way on to the real FSM
    
    localparam IGNORE = 8'd0; // Wait until we get a stop signal.
    localparam COUNTER = 8'd1; // Test pattern
