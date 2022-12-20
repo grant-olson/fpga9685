@@ -29,9 +29,9 @@ module i2c_controller_tb
 		      .rst_ni(rst_nr),
 		      .address_i(address),
 		      .rw_i(rw),
-		      .register_i(register),
-		      .data_i(data_in_r),
-		      .data_o(data_out),
+		      .register_id_i(register),
+		      .register_value_i(data_in_r),
+		      .register_value_o(data_out),
 		      
 		      .execute_i(trigger),
 
@@ -48,13 +48,14 @@ module i2c_controller_tb
 
       $display("Reading Data...");
       
-      address <= 7'b1111000;
+      address <= 7'h78;
       rw <= 1'b1;
-      register <= 8'b00001111;
+      register <= 8'h0F;
       data_in_r <= 8'b00000000;
       
       #1 trigger <= 1;
-      #5 trigger <= 0;
+      wait(busy == 1'b1);
+      #1 trigger <= 0;
       
       wait(busy == 1'b0);
       
@@ -63,7 +64,9 @@ module i2c_controller_tb
       data_in_r <= 8'b01010101;
 
       #1 trigger <= 1;
-      #5 trigger <= 0;
+      wait(busy == 1'b1);
+      
+      #1 trigger <= 0;
 
       wait(busy == 1'b0);
       

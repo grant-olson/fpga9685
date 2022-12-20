@@ -1,193 +1,208 @@
-/* I2C controller meant primarily to make it easy to test the device. */
+module i2c_clock
+  #( parameter ticks_per_clock=27//0 // 27 Mhz / 100Khz
+     )
+   (
+    input      clk_i,
+    input      rst_ni,
+    output reg clock_ro = 1'b1
+    );
+
+   reg [11:0]  counter_r = 12'b0;
+
+   
+   always @(posedge clk_i or negedge rst_ni) begin
+      if (~rst_ni) begin
+	 clock_ro <= 1'b1;
+	 counter_r <= 12'd0;
+      end else begin
+	 if (counter_r < ticks_per_clock / 2) clock_ro <= 1'b1;
+	 else if (counter_r < ticks_per_clock) clock_ro <= 1'b0;
+      
+	 if (counter_r > ticks_per_clock) counter_r <= 12'b0;
+	 else counter_r <= counter_r + 1'b1;
+      end
+      
+      
+   end
+   
+endmodule // i2c_clock
 
 module i2c_controller
-  #( parameter ticks = 27 // 2.7 Mhz / 100kbps
-    )
-   
   (
    input 	    clk_i,
    input 	    rst_ni,
 
    input [6:0] 	    address_i,
    input 	    rw_i,
-   input [7:0] 	    register_i,
-   input [7:0] 	    data_i,
-   output reg [7:0] data_o,
+   input [7:0] 	    register_id_i,
+   input [7:0] 	    register_value_i,
+   output reg [7:0] register_value_o,
 
    input 	    execute_i,
- 
+   output 	    busy_o,
+   
    output 	    scl_o,
-   inout 	    sda_io,
-
-   output 	    busy_o	    
+   inout 	    sda_io
    );
 
-   localparam WAIT = 4'd0;
-   localparam START = 4'd1;
-   localparam LOAD_BIT = 4'd2;
-   localparam SEND_BIT = 4'd3;
-   localparam FINALIZE_BIT = 4'd4;
-   localparam GET_ACK = 4'd5;
-   localparam SEND_ACK = 4'd6;
-   localparam SEND_NACK = 4'd7;
-   localparam STOP = 4'd8;
-   localparam RETRIEVE_BIT = 4'd9;
+
    
-   localparam READ = 1'b1;
-   localparam WRITE = 1'b1;
+   // We do a bunch of register shifting, so store
+   // values internally and preserve external values.
+   reg [6:0] address_r;
+   reg 	     rw_r;
+   reg [7:0] register_id_r;
+   reg [7:0] register_value_in_r;
+   reg [7:0] register_value_out_r;
    
-   reg [23:0] 	    buffer;
-   reg 		    rw_r;
+   wire   int_clk_w;
    
-   reg [3:0] 	    state = WAIT; 
-   
-   reg [3:0] 	    bits_sent;
-   reg [2:0] 	    bytes_sent;
- 	    
-   reg 		    sda_r = 1'bz;
-   reg 		    scl_r = 1'bz;
-		    
-   reg [15:0] 	    tick_counter;
-   
+   reg 	  sda_r = 1'bz;
    assign sda_io = sda_r;
-   assign scl_o = scl_r;
    
-   assign busy_o = state != WAIT;
+   i2c_clock i2c_clk (
+		      .clk_i(clk_i),
+		      .rst_ni(rst_ni),
+		     .clock_ro(int_clk_w)
+		      
+		      );
+
+   // Internal states, clock doesn't get propogated
+   localparam WAITING = 8'd0;
+   localparam START = 8'd1;
+   localparam STOP = 8'd2;
+   // External states, we send this clock to targets
+   localparam COUNTER = 8'd3; // For testing.
+   localparam SEND_ADDRESS = 8'd4;
+   localparam SEND_RW = 8'd5;
+   localparam SEND_REGISTER_ID = 8'd6;
+   localparam SEND_REGISTER_VALUE = 8'd7;
+   localparam RECV_REGSITER_VALUE = 8'd8;
+   localparam GET_ACK = 8'd9;
+   localparam NACK = 8'd10;
    
-   always @(posedge clk_i) begin
-      case (state)
-	WAIT: begin
-	   if (execute_i)
-	     begin
-		buffer[23:17] <= address_i;
-		buffer[16] <= rw_i;
-		buffer[15:8] <= register_i;
-		buffer[7:0] <= data_i;
+   
+   reg [7:0] state = WAITING;
+   reg [7:0] post_ack_state = WAITING;
+   
+   assign scl_o = (state <= STOP) ? 1'bz : int_clk_w;
+   assign busy_o = state != WAITING;
+    
+   reg [7:0] counter_r = 8'd0;
 
-		// Save independently since we shift bits out of buffer.
-		rw_r <= rw_i; 
-		
-		bits_sent <= 4'd0;
-		bytes_sent <= 3'd0;
-
-		tick_counter <= 16'd0;
-		
-		state <= START;
-	     end
+   always @(posedge int_clk_w or negedge int_clk_w) begin
+      if (~int_clk_w) begin // Negative edge, prep for data send
+	 case (state)
+	   WAITING: counter_r <= counter_r + 1'b1;
 	   
-	end // case: WAIT
-
-	START: begin // Bring SDA low while SCL is still high
-	   if(tick_counter < ticks / 2) begin
-	      tick_counter <= tick_counter + 1'b1;
-	   end else if (tick_counter < ticks) begin
-	      sda_r <= 1'b0;
-	      tick_counter <= tick_counter + 1'b1;
-	   end else begin
-	      tick_counter <= 16'd0;
-	      state <= LOAD_BIT;
-	   end
+	   START: begin
+	      address_r <= address_i;
+	      rw_r <= rw_i;
+	      register_id_r <= register_id_i;
+	      register_value_in_r <= register_value_i;
+	      register_value_out_r <= 8'b00000000;
 	      
-	end
-	
-	LOAD_BIT: begin
-	   scl_r <= 1'b0;
-	   tick_counter <= tick_counter + 1'b1;
-	   
-	   if (tick_counter >= 1) sda_r <= buffer[23] ? 1'bz : 1'b0 ;
-	   if (tick_counter >= ticks / 2 - 2) state <= SEND_BIT;
-	   
-	end
-
-	SEND_BIT: begin
-	   scl_r <= 1'bz;
-	   tick_counter <= tick_counter + 1'b1;
-
-	   if (tick_counter >= ticks - 2) state <= FINALIZE_BIT;
-	end
-
-	FINALIZE_BIT: begin
-	   scl_r <= 1'b1;
-	   buffer[23:1] <= buffer[22:0];
-	   if(bits_sent >= 7) begin // we just sent the eighth.
-	      state <= GET_ACK;
-	      tick_counter <= 0;
-	   end else begin
-	      bits_sent <= bits_sent + 1'b1;
-	      state <= LOAD_BIT;
-	      tick_counter <= 0;
+	      counter_r <= counter_r + 1'b1;
+	      sda_r <= 1'b0; // Pull low BEFORE clock is enabled
 	   end
 	   
-	end // case: FINALIZE_BIT
+	   COUNTER: counter_r <= counter_r + 1'b1;
 
-	// READ bit in from CLIENT to WRITE to REGISTER
-	// Come up with a better name.
-	RETRIEVE_BIT: begin
-	   tick_counter <= tick_counter + 1'b1;
-	   if (tick_counter < ticks / 2 - 1) scl_r <= 1'bz;
-	   else if (tick_counter < ticks / 2) begin
-	      data_o[6:0] <= data_o[7:1];
-	      data_o[7] <= sda_io;
-	      bits_sent <= bits_sent + 1'b1;
-	      if (bits_sent > 7) state <= GET_ACK;
+	   SEND_ADDRESS: begin
+	      counter_r <= counter_r + 1'b1;
+
+	      sda_r <= address_r[6] ? 1'bz : 1'b0;
+	      address_r <= {address_r[5:0], 1'b0};
 	   end
-	   else if (tick_counter < ticks - 2) scl_r <= 1'b0;
-	   else begin
-	      tick_counter <= 16'b0;
-	      
-	      scl_r <= 1'bz;
+
+	   SEND_RW: sda_r <= rw_r ? 1'bz : 1'b0;
+
+	   SEND_REGISTER_ID: begin
+	      counter_r <= counter_r + 1'b1;
+	      sda_r <= register_id_r[7] ? 1'bz : 1'b0;
+	      register_id_r <= {register_id_r[6:0], 1'b0};
+	   end
+
+	   SEND_REGISTER_VALUE: begin
+	      counter_r <= counter_r + 1'b1;
+	      sda_r <= register_value_in_r[7] ? 1'bz : 1'b0;
+	      register_value_in_r <= {register_value_in_r[6:0], 1'b0};
 	   end
 	   
+	   GET_ACK: sda_r <= 1'bz; // Release SDA to Target
 	   
-	end
-	
-	
-	GET_ACK: begin
-	   tick_counter <= tick_counter + 1'b1;
-	   
-	   if (tick_counter < ticks / 2 - 1) scl_r <= 1'bz;
-	   
-	   else if (tick_counter < ticks - 2) scl_r <= 1'b0;
-	   
-	   else if (tick_counter >= ticks - 1) begin
+	   STOP: begin
+	      sda_r <= 1'bz;
+	      state <= WAITING;
 
-	      if (bytes_sent == 1 && ~rw_r ) begin
-		 tick_counter <= 16'd0;
-
-		 state <= RETRIEVE_BIT;
-		 bits_sent <= 4'd0;
-		 bytes_sent <= bytes_sent + 1'b1;
-		 
-	      end else if(bytes_sent >= 2) begin
-		 tick_counter <= 16'd0;
-		 state <= STOP;
-	      end else begin
-		 scl_r <= 1'bz;
-		 bytes_sent <= bytes_sent + 1'b1;
-		 bits_sent <= 4'd0;
-		 tick_counter <= 16'd0;
-		 
-		 state <= LOAD_BIT;
+	   end
+	 endcase // case (state)
+	 
+      end else begin  
+	 // Positive edge, deal with counters here so we don't
+	 // need to think about off by one errors before
+	 // registers lock in new values.
+	 case (state)
+	   WAITING: begin
+	      if (execute_i) begin
+		 state <= START;
+		 counter_r <= 8'b0;
 	      end
 	   end
-	   
-	end // case: GET_ACK
 
-	STOP: begin // Release SDA AFTER SCL is released.
-	   if (tick_counter < ticks / 2) begin
-	      scl_r <= 1'bz;
-	      sda_r <= 1'b0;
-	      tick_counter <= tick_counter + 1'b1;
-	   end else if (tick_counter < ticks) begin
-	      sda_r <= 1'bz;
-	      tick_counter <= tick_counter + 1'b1;
-	   end else state <= WAIT;
-	end
-	
-      endcase // case state
+	   START: begin
+	      if (counter_r >= 2) begin
+		 state <= SEND_ADDRESS;
+		 counter_r <= 8'b0;
+	      end
+	   end
+
+	   COUNTER: begin
+	      if (counter_r == 8) state <= STOP;
+	   end
+
+	   SEND_ADDRESS: begin
+	      if (counter_r == 7) begin
+		 state <= SEND_RW;
+		 counter_r <= 8'b0;
+	      end
+	      
+	   end
+
+	   SEND_RW: begin
+	      counter_r <= 8'b0;
+	      state <= GET_ACK;
+	      post_ack_state <= SEND_REGISTER_ID;
+	   end
+
+	   SEND_REGISTER_ID: begin
+	      if (counter_r == 8) begin
+		 state <= GET_ACK;
+		 post_ack_state <= SEND_REGISTER_VALUE;
+	      end
+	   end
+
+	   SEND_REGISTER_VALUE: begin
+	      if (counter_r == 8) begin
+		 state <= GET_ACK;
+		 post_ack_state <= STOP;
+	      end
+	   end
+
+	   GET_ACK: begin
+	      // For now, assume we're good.
+	      counter_r <= 8'b0;
+	      state <= post_ack_state;
+	   end
+	       
+	   
+	 endcase // case (state)
+      
+      end
+      
+      
+      
    end
    
+   
 endmodule // i2c_controller
-
-
-
