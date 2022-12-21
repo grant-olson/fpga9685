@@ -73,6 +73,8 @@ module i2c_target
          if (scl_i ^ last_scl_r) begin
             if (~scl_i) begin // Negative edge, get ready for clock
                case (state)
+                 IGNORE: sda_r <= 1'bz; // Release SDA
+
                  COUNTER: begin
                     counter_r <= counter_r + 1'b1;
                     sda_r <= counter_r[0] ? 1'bz : 1'b0;
@@ -111,7 +113,11 @@ module i2c_target
                  RECV_RW: begin
                     rw_r <= sda_io;
                     post_ack_state <= RECV_REGISTER_ID;
-                    state <= ACK;
+
+                    // Check that it's talking to us
+                    if (address_r == assigned_address_i) state <= ACK;
+                    else state <= IGNORE;
+                    
                     counter_r <= 8'b0;
                  end
 
@@ -141,7 +147,6 @@ module i2c_target
 
                  SEND_REGISTER_VALUE: begin
                     if (counter_r == 8) begin
-                       sda_r <= 1'bz; // Release SDA
                        counter_r <= 8'b0;
                        state <= IGNORE;
                     end
