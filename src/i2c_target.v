@@ -60,14 +60,16 @@ module i2c_target
    reg [7:0] post_ack_state;
 
    assign dbg_state_o = state[3:0];
-   
+
+   parameter   REGISTERS = 16;
+   reg [7:0] register_values_r[0:REGISTERS-1];
    
    reg [7:0] counter_r = 8'd0;
 
    // These are the values sent by the controller to respond to
    // not internal values
    reg [6:0] address_r;
-   reg              rw_r;
+   reg       rw_r;
    reg [7:0] register_id_r;
    reg [7:0] register_value_r;
 
@@ -152,8 +154,13 @@ module i2c_target
               RECV_REGISTER_VALUE: begin
                  register_value_r <= {register_value_r[6:0], sda_io};
                  if (counter_r == 8) begin
+                    
                     counter_r <= 8'd0;
 
+                    if (register_id_r < REGISTERS) begin
+                       register_values_r[register_id_r] <= {register_value_r[6:0], sda_io};
+                    end else 
+                    
                     // Assume we only get one byte, don't check to
                     // see if controller is sending more.
                     post_ack_state <= RECV_ADDRESS;
@@ -176,8 +183,14 @@ module i2c_target
                  state <= post_ack_state;
 
                  if(post_ack_state == SEND_REGISTER_VALUE) begin
-                    // For now, swap nibbles
-                    register_value_r <= {register_id_r[3:0], register_id_r[7:4]};
+                    if (register_id_r < REGISTERS) begin
+                       register_value_r <= register_values_r[register_id_r];
+                    end else begin
+                       
+                       // For now, swap nibbles
+                       register_value_r <= {register_id_r[3:0], register_id_r[7:4]};
+                    end
+                    
                  end
               end
               
