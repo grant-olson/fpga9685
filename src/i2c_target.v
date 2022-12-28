@@ -1,18 +1,24 @@
 module i2c_target
   (
-   input clk_i,
-   input rst_ni,
+   input        clk_i,
+   input        rst_ni,
    
-   input [6:0] assigned_address_i, // This is the address we respond to.
+   input [6:0]  assigned_address_i, // This is the address we respond to.
 
-   input scl_i,
-   inout sda_io
+   input        scl_i,
+   inout        sda_io,
+
+   // To track state with a hardware logic analyzer
+   // for debugging. Not needed when not debugging
+   output       dbg_start_o,
+   output [3:0] dbg_state_o
    
    );
 
 
-   reg              sda_r = 1'bz;
+   reg          sda_r = 1'bz;
    assign sda_io = sda_r;
+
 
    // We need to catch start/stop conditions, and we need to
    // do work on both SCL positive and negative edges. so lets
@@ -28,6 +34,7 @@ module i2c_target
 
    wire      start_stop_edge;
    assign start_stop_edge = scl_i & sda_edge;
+   assign dbg_start_o = start_stop_edge;
    
    always @(posedge clk_i) begin
       // Update last states to catch edges
@@ -52,6 +59,9 @@ module i2c_target
    reg [7:0] state = RECV_ADDRESS;
    reg [7:0] post_ack_state;
 
+   assign dbg_state_o = state[3:0];
+   
+   
    reg [7:0] counter_r = 8'd0;
 
    // These are the values sent by the controller to respond to
@@ -73,7 +83,11 @@ module i2c_target
                  sda_r <= counter_r[0] ? 1'bz : 1'b0;
               end
 
-              RECV_ADDRESS: counter_r <= counter_r + 1'b1;
+              RECV_ADDRESS: begin
+                 sda_r <= 1'bz; // Start condtion initialization
+                 counter_r <= counter_r + 1'b1;
+              end
+              
               RECV_REGISTER_ID: begin
                  sda_r <= 1'bz; // Clear out ACK
                  counter_r <= counter_r + 1'b1;
@@ -106,7 +120,12 @@ module i2c_target
 
               RECV_RW: begin
                  rw_r <= sda_io;
-                 post_ack_state <= RECV_REGISTER_ID;
+
+                 // TODO: Read up on this. Needed this to work with
+                 // i2cget, and only figured it out by using a logic
+                 // analyzer to track states.
+                 if (sda_io) post_ack_state <= SEND_REGISTER_VALUE;
+                 else post_ack_state <= RECV_REGISTER_ID;
 
                  // Check that it's talking to us
                  if (address_r == assigned_address_i) state <= ACK;
@@ -183,7 +202,10 @@ module top
    input clk_i,
    input rst_ni,
    input scl_i,
-   inout sda_io
+   inout sda_io,
+
+   output dbg_start_o,
+   output [3:0] dbg_state_o
    
    );
 
@@ -192,7 +214,11 @@ module top
                   .rst_ni(rst_ni),
                   .assigned_address_i(7'b1110000),
                   .scl_i(scl_i),
-                  .sda_io(sda_io)
+                  .sda_io(sda_io),
+                  // To track state with a hardware logic analyzer
+                  // for debugging. Not needed when not debugging
+                  .dbg_start_o(dbg_start_o),
+                  .dbg_state_o(dbg_state_o)
                   );
    
                   
