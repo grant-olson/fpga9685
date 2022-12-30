@@ -141,10 +141,7 @@ module i2c_target
                  if (counter_r == 8) begin
                     counter_r <= 8'd0;
 
-                    // 1 - READ - SEND TO CONTROLLER
-                    // 0 - WRITE - READ FROM CONTROLLER
-                    if (rw_r) post_ack_state <= SEND_REGISTER_VALUE;
-                    else post_ack_state <= RECV_REGISTER_VALUE;
+                    post_ack_state <= RECV_REGISTER_VALUE;
                     
                     state <= ACK;
                  end
@@ -159,14 +156,16 @@ module i2c_target
 
                     if (register_id_r < REGISTERS) begin
                        register_values_r[register_id_r] <= {register_value_r[6:0], sda_io};
-                    end else 
+                    end
                     
                     // Assume we only get one byte, don't check to
                     // see if controller is sending more.
                     post_ack_state <= RECV_ADDRESS;
                     state <= ACK; 
-                 end
-              end
+                 end // if (counter_r == 8)
+                 
+              end // case: RECV_REGISTER_VALUE
+              
 
               SEND_REGISTER_VALUE: begin
                  if (counter_r == 8) begin
@@ -181,7 +180,7 @@ module i2c_target
               
               ACK: begin
                  state <= post_ack_state;
-
+                 
                  if(post_ack_state == SEND_REGISTER_VALUE) begin
                     if (register_id_r < REGISTERS) begin
                        register_value_r <= register_values_r[register_id_r];
@@ -204,6 +203,7 @@ module i2c_target
          if (sda_io) state <= IGNORE; // Went LOW to HIGH - STOP
          else state <= RECV_ADDRESS; // HIGH to LOW - START
       end
+      
       
    end // always @ (posedge clk_i)
    
