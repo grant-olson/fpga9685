@@ -160,7 +160,7 @@ module i2c_target
                     
                     // Assume we only get one byte, don't check to
                     // see if controller is sending more.
-                    post_ack_state <= RECV_ADDRESS;
+                    post_ack_state <= IGNORE;
                     state <= ACK; 
                  end // if (counter_r == 8)
                  

@@ -29,20 +29,22 @@ endmodule // i2c_clock
 
 module i2c_controller
   (
-   input 	    clk_i,
-   input 	    rst_ni,
+   input            clk_i,
+   input            rst_ni,
 
-   input [6:0] 	    address_i,
-   input 	    rw_i,
-   input [7:0] 	    register_id_i,
-   input [7:0] 	    register_value_i, // In - writing TO target
+   input [6:0]      address_i,
+   input            rw_i,
+   input [7:0]      register_id_i,
+   input [7:0]      register_value_i, // In - writing TO target
    output reg [7:0] register_value_ro, // out - reading FROM target
 
-   input 	    execute_i,
-   output 	    busy_o,
+   input            send_register_value_i,
    
-   output 	    scl_o,
-   inout 	    sda_io
+   input            execute_i,
+   output           busy_o,
+   
+   output           scl_o,
+   inout            sda_io
    );
 
 
@@ -54,6 +56,7 @@ module i2c_controller
    reg [7:0] register_id_r;
    reg [7:0] register_value_in_r;
    reg [7:0] register_value_out_r;
+   reg       send_register_value_r;
    
    wire   int_clk_w;
    
@@ -70,23 +73,37 @@ module i2c_controller
    // Internal states, clock doesn't get propogated
    localparam WAITING = 8'd0;
    localparam START = 8'd1;
+   
    localparam STOP = 8'd2;
+   localparam RESTART= 8'd3;
    
    // External states, we send this clock to targets
-   localparam COUNTER = 8'd3; // For testing.
-   localparam SEND_ADDRESS = 8'd4;
-   localparam SEND_RW = 8'd5;
-   localparam SEND_REGISTER_ID = 8'd6;
-   localparam SEND_REGISTER_VALUE = 8'd7;
-   localparam RECV_REGISTER_VALUE = 8'd8;
-   localparam GET_ACK = 8'd9;
-   localparam NACK = 8'd10;
-   
+   localparam COUNTER = 8'd4; // For testing.
+   localparam SEND_ADDRESS = 8'd5;
+   localparam SEND_RW = 8'd6;
+   localparam SEND_REGISTER_ID = 8'd7;
+   localparam SEND_REGISTER_VALUE = 8'd8;
+   localparam RECV_REGISTER_VALUE = 8'd9;
+   localparam GET_ACK = 8'd10;
+   localparam NACK = 8'd11;
    
    reg [7:0] state = WAITING;
    reg [7:0] post_ack_state = WAITING;
+
+   // This is a little tricky. When we want to STOP we still need
+   // A negative clock edge so that the target device knows it can
+   // release control of the SDA line after sending an ACK.
+   //
+   // So we use this to delay the state one SCL clock so that we get
+   // that negative edge.
+   //
+   // I feel there's a better way to do this, but we're only using
+   // this code to drive a test bench so we'll stick with the fact
+   // that this works, and that the physical device responds to real
+   // requests.
+   reg [7:0] last_state = WAITING;
+   assign scl_o = (last_state <= STOP) ? 1'bz : int_clk_w;
    
-   assign scl_o = (state <= STOP) ? 1'bz : int_clk_w;
    assign busy_o = state != WAITING;
     
    reg [7:0] counter_r = 8'd0;
@@ -108,19 +125,24 @@ module i2c_controller
       end else if (int_clk_edge) begin
          if (~int_clk_w) begin // Negative edge, prep for data send
 	    case (state)
-	      WAITING: counter_r <= counter_r + 1'b1;
-	      
+	      WAITING: begin
+                 counter_r <= counter_r + 1'b1;
+              end
+              
 	      START: begin
 	         address_r <= address_i;
 	         rw_r <= rw_i;
 	         register_id_r <= register_id_i;
 	         register_value_in_r <= register_value_i;
 	         register_value_out_r <= 8'b00000000;
-	         
+                 send_register_value_r <= send_register_value_i;
+                 
 	         counter_r <= counter_r + 1'b1;
 	         sda_r <= 1'b0; // Pull low BEFORE clock is enabled
 	      end
-	      
+
+              RESTART: sda_r <= 1'bz;
+              
 	      COUNTER: counter_r <= counter_r + 1'b1;
 
 	      SEND_ADDRESS: begin
@@ -153,18 +175,22 @@ module i2c_controller
 	      GET_ACK: sda_r <= 1'bz; // Release SDA to Target
 	      
 	      STOP: begin
-	         sda_r <= 1'bz;
+	         sda_r <= 1'b0;
 	         state <= WAITING;
 
 	      end
 	    endcase // case (state)
-	    
+
+             last_state <= state;
          end else begin  
 	    // Positive edge, deal with counters here so we don't
 	    // need to think about off by one errors before
 	    // registers lock in new values.
+
+             
 	    case (state)
 	      WAITING: begin
+                 if (sda_r == 1'b0) sda_r <= 1'bz;
 	         if (execute_i) begin
 		    state <= START;
 		    counter_r <= 8'b0;
@@ -176,6 +202,12 @@ module i2c_controller
 		    state <= SEND_ADDRESS;
 		    counter_r <= 8'b0;
 	         end
+	      end
+              
+	      RESTART: begin
+                 sda_r <= 1'b0;
+	         state <= WAITING;
+		 counter_r <= 8'b0;
 	      end
 
 	      COUNTER: begin
@@ -194,14 +226,18 @@ module i2c_controller
 	         counter_r <= 8'b0;
 	         state <= GET_ACK;
                  if (~rw_r) post_ack_state <= SEND_REGISTER_ID;
-                 else post_ack_state <= RECV_REGISTER_VALUE;
+                 else begin
+                    post_ack_state <= RECV_REGISTER_VALUE;
+                 end
+                 
 	      end
 
 	      SEND_REGISTER_ID: begin
 	         if (counter_r == 8) begin
 		    state <= GET_ACK;
 		    // LOW RW == WRITE
-		    post_ack_state <= SEND_REGISTER_VALUE;
+                    if (send_register_value_r) post_ack_state <= SEND_REGISTER_VALUE;
+                    else post_ack_state <= RESTART;
 	         end
 	      end
 
@@ -225,21 +261,21 @@ module i2c_controller
 	      GET_ACK: begin
 	         // For now, assume we're good.
 	         counter_r <= 8'b0;
-
 	         
 	         if (post_ack_state == STOP) begin
-		    sda_r <= 1'b0; // Pull this down so we can release it after stopping clock.
+		  //  sda_r <= 1'b0; // Pull this down so we can release it after stopping clock.
 		    // Send out register value
 		    if (rw_r) register_value_ro <= register_value_out_r;
-	         end
-	         
+                    
+	         end else if (post_ack_state == START) begin
+                    sda_r <= 1'bz;
+                 end
 
-	         
 	         state <= post_ack_state;
 	      end // case: GET_ACK
+
+              STOP: sda_r <= 1'bz;
               
-	      
-	      
 	    endcase // case (state)
             
          end // else: !if(~scl_io)

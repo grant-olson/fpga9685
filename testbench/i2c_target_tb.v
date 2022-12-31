@@ -23,7 +23,7 @@ module i2c_target_tb
 		      .clk_i(clk_r),
 		      .rst_ni(rst_nr),
 
-		      .assigned_address_i(7'b1111111), 
+		      .assigned_address_i(7'h48), 
 
 		      .scl_i(scl_w),
 		      .sda_io(sda_w)
@@ -36,24 +36,26 @@ module i2c_target_tb
 
    reg [6:0] c1_address_r = 7'h48;
    reg 	     c1_rw_r = 1'b1;
-   reg [7:0] c1_register_r = 8'hBE;
-   reg [7:0] c1_value_r = 8'hEE;
+   reg [7:0] c1_register_r = 8'h0E;
+   reg [7:0] c1_value_r = 8'hAF;
+   reg       c1_send_register_value_r = 1'b1;
    
    i2c_controller i2c_c1 (
-		      .clk_i(clk_r),
-		      .rst_ni(rst_nr), 
-		      .address_i(c1_address_r),
-		      .rw_i(c1_rw_r),
-		      .register_id_i(c1_register_r),
-		      .register_value_i(c1_value_r),
-		      .register_value_ro(),
-		      
-		      .execute_i(trigger_r),
+		          .clk_i(clk_r),
+		          .rst_ni(rst_nr), 
+		          .address_i(c1_address_r),
+		          .rw_i(c1_rw_r),
+		          .register_id_i(c1_register_r),
+		          .register_value_i(c1_value_r),
+		          .register_value_ro(),
+      
+		          .execute_i(trigger_r),
+                          .send_register_value_i(c1_send_register_value_r),
 
-		      .scl_o(scl_w),
-		      .sda_io(sda_w),
-		      .busy_o(busy)
-		      );
+		          .scl_o(scl_w),
+		          .sda_io(sda_w),
+		          .busy_o(busy)
+		          );
    
 
    
@@ -63,28 +65,44 @@ module i2c_target_tb
       #1 rst_nr <= 0;
       #1 rst_nr <= 1;
 
-      $display("Sending READ request...");
-      
-      #1 trigger_r <= 1;
-      wait(busy == 1'b1);
-      #1 trigger_r <= 0;
-
-      wait(busy == 1'b0);
-
-/*      $display("Sending WRITE request...");
+      $display("Sending WRITE request...");
       
       
-      #1 c1_address_r <= 7'b0110111;
-      c1_register_r <= 8'hDE;
+      #1 c1_address_r <= 7'h48;
+      c1_register_r <= 8'h0E;
+      c1_value_r <= 8'hB1;
       c1_rw_r <= 1'b0;
-
+      c1_send_register_value_r <= 1'b1;
+      
       #1 trigger_r <= 1;
       wait(busy == 1'b1);
       #1 trigger_r <= 0;
 
       wait(busy == 1'b0);
-*/
-      #400;
+
+      $display("Sending READ request, part one WRITE REGISTER ADDRESS ONLY...");
+
+      #1 c1_rw_r <= 1'b0;
+      c1_send_register_value_r <= 1'b0;
+      
+      #1 trigger_r <= 1;
+      wait(busy == 1'b1);
+      #1 trigger_r <= 0;
+
+      wait(busy == 1'b0);
+
+      $display("Sending READ request, part two READ VALUE ONLY...");
+
+      #1 c1_rw_r <= 1'b1;
+      
+      #1 trigger_r <= 1;
+      wait(busy == 1'b1);
+      #1 trigger_r <= 0;
+
+      wait(busy == 1'b0);
+
+  
+      
       $finish();
    end
 
