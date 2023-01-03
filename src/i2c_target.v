@@ -1,23 +1,41 @@
 module i2c_target
   (
-   input        clk_i,
-   input        rst_ni,
+   input            clk_i,
+   input            rst_ni,
    
-   input [6:0]  assigned_address_i, // This is the address we respond to.
+   input [6:0]      assigned_address_i, // This is the address we respond to.
 
-   input        scl_i,
-   inout        sda_io,
+   input            scl_i,
+   inout            sda_io,
 
+   // Register storage interface
+   output reg [7:0] write_register_id_o,
+   output reg [7:0] write_register_value_o,
+   output reg       write_enable_o,
+   input [0:2047]   register_blob_i,
+   
    // To track state with a hardware logic analyzer
    // for debugging. Not needed when not debugging
-   output       dbg_start_o,
-   output [3:0] dbg_state_o
+   output           dbg_start_o,
+   output [3:0]     dbg_state_o
    
    );
 
 
    reg          sda_r = 1'bz;
    assign sda_io = sda_r;
+
+   // Helper for memory. We can't pass in 2d array, so generate
+   // out an easy-to-use access.
+   wire [7:0]   register_bytes_w[0:255];
+
+   generate
+      genvar    i;
+      
+      for(i = 0; i < 256; i = i + 1) begin : make_bytes
+         assign register_bytes_w[i] = register_blob_i[i*8:i*8+7];
+      end
+   endgenerate
 
 
    // We need to catch start/stop conditions, and we need to
@@ -61,8 +79,7 @@ module i2c_target
 
    assign dbg_state_o = state[3:0];
 
-   parameter   REGISTERS = 16;
-   reg [7:0] register_values_r[0:REGISTERS-1];
+   parameter   REGISTERS = 256;
    
    reg [7:0] counter_r = 8'd0;
 
@@ -105,7 +122,11 @@ module i2c_target
                  register_value_r <= {register_value_r[6:0], 1'b0};
               end
               
-              ACK: sda_r <= 1'b0; // For now always ACK
+              ACK: begin
+                 sda_r <= 1'b0; // For now always ACK
+                 write_enable_o <= 1'b0; // Make sure we don't leave this open.
+              end
+              
 
               GET_ACK: sda_r <= 1'bz; // CLEAR SDA
               
@@ -155,7 +176,10 @@ module i2c_target
                     counter_r <= 8'd0;
 
                     if (register_id_r < REGISTERS) begin
-                       register_values_r[register_id_r] <= {register_value_r[6:0], sda_io};
+                       write_register_id_o <= register_id_r;
+                       write_register_value_o <= {register_value_r[6:0], sda_io};
+                       write_enable_o <= 1'b1;
+                       
                     end
                     
                     // Assume we only get one byte, don't check to
@@ -183,7 +207,7 @@ module i2c_target
                  
                  if(post_ack_state == SEND_REGISTER_VALUE) begin
                     if (register_id_r < REGISTERS) begin
-                       register_value_r <= register_values_r[register_id_r];
+                       register_value_r <= register_bytes_w[register_id_r];
                     end else begin
                        
                        // For now, swap nibbles

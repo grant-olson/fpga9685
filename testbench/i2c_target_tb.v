@@ -19,6 +19,19 @@ module i2c_target_tb
    
    always #1 clk_r = ~clk_r;
 
+   // Need a shared data store for other components to use
+   wire [7:0] write_register_id_w, write_register_value_w;
+   wire       write_enable_w;
+   wire [0:2047] register_blob_w;
+   
+   register_data reg_data (
+                           .clk_i(clk_r),
+                           .rst_ni(rst_nr),
+                           .write_register_id_i(write_register_id_w),
+                           .write_register_value_i(write_register_value_w),
+                           .write_enable_i(write_enable_w),
+                           .register_blob_o(register_blob_w)
+                           );
    i2c_target i2c_t1 (
 		      .clk_i(clk_r),
 		      .rst_ni(rst_nr),
@@ -26,10 +39,16 @@ module i2c_target_tb
 		      .assigned_address_i(7'h48), 
 
 		      .scl_i(scl_w),
-		      .sda_io(sda_w)
-	
+		      .sda_io(sda_w),
+                      
+                      .write_register_id_o(write_register_id_w),
+                      .write_register_value_o(write_register_value_w),
+                      .write_enable_o(write_enable_w),
+                      .register_blob_i(register_blob_w)
 	     );
 
+   
+   
    reg 	trigger_r = 1'b0;
    wire busy;
 
