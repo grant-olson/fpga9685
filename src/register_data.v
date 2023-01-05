@@ -1,3 +1,4 @@
+
 module register_data
   (
 
@@ -15,8 +16,25 @@ module register_data
    output reg [0:2047] register_blob_o
    );
 
+`include "src/pca_registers.vh"
+
+   
    always @(posedge clk_i or negedge rst_ni) begin
       if(~rst_ni) begin
+         // All the low default values
+         register_blob_o[0:PCA_LOW_MAX_REG*8+7] <= PCA_DEFAULT_VALUES_LOW;
+
+         // Unused, but without this the simulator things we have
+         // undefined values
+         register_blob_o[(PCA_LOW_MAX_REG+1)*8:(PCA_HIGH_MIN_REG-1)*8+7] <= {{1'b0}};
+
+         // All the high default values
+         register_blob_o[PCA_HIGH_MIN_REG*8:PCA_HIGH_MAX_REG*8+7] <= PCA_DEFAULT_VALUES_HIGH;
+
+         // Unused, but without this the simulator things we have
+         // undefined values
+         register_blob_o[(PCA_HIGH_MAX_REG+1)*8:(PCA_HIGH_MAX_REG+1)*8+7] <= {{1'b1}};
+         
       end else if (write_enable_i) begin
          register_blob_o[write_register_id_i*8] <= write_register_value_i[7];
          register_blob_o[write_register_id_i*8+1] <= write_register_value_i[6];
