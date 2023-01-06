@@ -24,6 +24,15 @@ module top
                            .register_blob_o(register_blob_w)
                            );
 
+   wire [11:0]    counter_w;
+   
+   prescaled_counter counter (
+                  .clk_i(clk_i),
+                  .rst_ni(rst_ni),
+                  .prescale_value(8'h1E),
+                  .counter_ro(counter_w)
+                  );
+   
    i2c_target ic2(
                   .clk_i(clk_i),
                   .rst_ni(rst_ni),
