@@ -5,6 +5,21 @@ This project reimplements the behavior of the venerable PCA9685
 FPGAs. The PCA9685 is used by hobbyists around the world to drive
 multiple servos from a microcontroller while minimizing GPIO usage.
 
+Currently we have basic functionality:
+
+* Clock prescaler can be set to determine PWM Hertz signals.
+* Individual PWM settings can be set.
+
+Known things on the todo list:
+
+* Check clock prescaler values, and only allow update in `SLEEP` mode.
+* External Clock Support.
+* Signal Inversion.
+* `_ALL_` set registers should propogate values to individual registers.
+* `ALLCALL` and `RESET` i2c addresses need to be implemented.
+* Custom assigned address via input pins.
+* More, I'm sure...
+
 ## Makefile
 
 A Makefile is provided to run test benches in Icarus Verilog. Since
