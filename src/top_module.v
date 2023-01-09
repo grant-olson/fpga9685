@@ -55,28 +55,6 @@ module top
    pwm_driver pwm1 (
                     .counter_i(counter_w),
 
-            /*        .pwm_0_on_i(register_led_w[(0*32)+13]),
-                    .pwm_0_off_i(register_led_w[(0*32)+27]),
-                    .pwm_0_high_i({
-                                   {register_led_w[(0*32)+15:(0*32)+12]},
-                                   {register_led_w[(0*32)+7:(0*32)+0]}
-                                   }),
-                    .pwm_0_low_i({
-                                  {register_led_w[(0*32)+31:(0*32)+28]},
-                                  {register_led_w[(0*32)+23:(0*32)+16]}
-                                  }),
-                    .pwm_0_o(led_0_o),
-*/
-
-/* force 50% for testing                    
-                    // Should be 50%
-                    .pwm_0_on_i(1'b0),
-                    .pwm_0_off_i(1'b0),
-                    .pwm_0_high_i(12'h001),
-                    .pwm_0_low_i(12'h800),
-                    .pwm_0_o(led_0_o),
-*/
-                    
                     .pwm_0_on_i(register_led_w[(0*32)+11]),
                     .pwm_0_off_i(register_led_w[(0*32)+27]),
                     .pwm_0_high_i({
