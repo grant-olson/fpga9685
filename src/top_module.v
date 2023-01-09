@@ -48,7 +48,7 @@ module top
    prescaled_counter counter (
                   .clk_i(clk_i),
                   .rst_ni(rst_ni),
-                  .prescale_value(8'd132),
+                  .prescale_value(register_blob_w[8'hFE*8:8'hFE*8+7]),
                   .counter_ro(counter_w)
                   );
 
