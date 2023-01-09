@@ -2,6 +2,9 @@ module top
   (
    input        clk_i,
    input        rst_ni,
+
+   input [5:0]  address_i,
+
    input        scl_i,
    inout        sda_io,
 
@@ -254,7 +257,7 @@ module top
    i2c_target ic2(
                   .clk_i(clk_i),
                   .rst_ni(rst_ni),
-                  .assigned_address_i(7'b1110000),
+                  .assigned_address_i({{1'b1},{address_i}}),
                   .scl_i(scl_i),
                   .sda_io(sda_io),
 

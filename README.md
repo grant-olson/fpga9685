@@ -5,10 +5,16 @@ This project reimplements the behavior of the venerable PCA9685
 FPGAs. The PCA9685 is used by hobbyists around the world to drive
 multiple servos from a microcontroller while minimizing GPIO usage.
 
-Currently we have basic functionality:
+The manufacturer describes the chip as a PWM LED controller. To be
+consistent with the documentation in the datasheet we will frequently
+refer to PWM pins as LED pins, such as `LED0`. In practice the terms
+PWM and LED are interchangeable.
 
+Current implemented functionality:
+
+* Custom address lines `A0`-`A5`.
 * Clock prescaler can be set to determine PWM Hertz signals.
-* Individual PWM settings can be set.
+* Individual PWM settings for LED0 - LED15 can be set.
 
 Known things on the todo list:
 
@@ -17,8 +23,49 @@ Known things on the todo list:
 * Signal Inversion.
 * `_ALL_` set registers should propogate values to individual registers.
 * `ALLCALL` and `RESET` i2c addresses need to be implemented.
-* Custom assigned address via input pins.
 * More, I'm sure...
+
+## Custom Addresses
+
+To mimic the PCA9685 there are 6 input pins `A0`-`A5` which you
+probably want to configure with Pull Down resistors. Then the device
+will operate at a default i2c address of `0x40`. You can then connect
+the pins to `V+` to change the address to support more than one device
+on the bus.
+
+Alternately, if you're trying to save pins you can hard-code the address
+for an individual FPGA in `src/top_module.v`.
+
+Note that you should avoid the the ALL CALL address `0x70` although it is
+physically possible to set this address via the pins.
+
+## Clock and PreScale
+
+The PCA9865 provides equations to set the base PWM hertz in the
+datasheet. This assumes you are using a clock speed of 25 Mhz. If your
+main FPGA clock does not run at this speed you'll need to set up a PLL
+to get identical behavior.
+
+If you have access to your controller and choose to change the value
+written to the FPGA9685 and the pre-scaler, the new equation is:
+
+```
+
+    Mhz of FPGA
+--------------------  -  1
+4096 x Desired Hertz
+
+```
+
+For example, if we want to generate a 50 Hz servo PWM signal on a Tang
+Nano 9k with a clock speed of 27 Mhz.
+
+```
+27 MHz
+--------- - 1 = **131.8** *rounded to **132**
+4096 * 50
+
+```
 
 ## Makefile
 
