@@ -56,7 +56,7 @@ module top
                     .pwm_0_on_i(1'b0),
                     .pwm_0_off_i(1'b0),
                     .pwm_0_high_i(12'd0),
-                    .pwm_0_low_i(12'd0),
+                    .pwm_0_low_i(12'd409),
                     .pwm_0_o(led_0_o),
 
                     .pwm_1_on_i(1'b0),
