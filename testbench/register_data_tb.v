@@ -45,16 +45,42 @@ module register_data_tb
       write_register_value_r <= 8'hAA;
 
       #1 write_enable_r <= 1;
-      #1 write_enable_r <= 0;
+      #5 write_enable_r <= 0;
 
       #1 write_register_id_r <= 8'h00;
       write_register_value_r <= 8'hBB;
 
       #1 write_enable_r <= 1;
-      #1 write_enable_r <= 0;
+      #5 write_enable_r <= 0;
 
-      #10;
+      $display("Writing 4 values to single LED settings");
+
+      #1 write_register_id_r <= 8'h42;
+      write_register_value_r <= 8'hDE;
+      
+      #1 write_enable_r <= 1;
+      #5 write_enable_r <= 0;
    
+      #1 write_register_id_r <= 8'h43;
+      write_register_value_r <= 8'h4D;
+      
+      #1 write_enable_r <= 1;
+      #5 write_enable_r <= 0;
+   
+      #1 write_register_id_r <= 8'h44;
+      write_register_value_r <= 8'hBE;
+      
+      #1 write_enable_r <= 1;
+      #5 write_enable_r <= 0;
+   
+      #1 write_register_id_r <= 8'h45;
+      write_register_value_r <= 8'hEF;
+      
+      #1 write_enable_r <= 1;
+      #5 write_enable_r <= 0;
+   
+      #10;
+
   
       $finish();
    end
