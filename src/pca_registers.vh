@@ -76,6 +76,22 @@ localparam PCA_ALL_LED_OFFH = 8'hFD;
 localparam PCA_PRE_SCALE = 8'hFE;
 localparam PCA_TEST_MODE = 8'hFF;
 
+// Mode bits, as they sit in our big blob of data
+localparam PCA_MODE1_RESTART = 0;
+localparam PCA_MODE1_EXTCLK = 1;
+localparam PCA_MODE1_AI = 2;
+localparam PCA_MODE1_SLEEP = 3;
+localparam PCA_MODE1_SUB1 = 4;
+localparam PCA_MODE1_SUB2 = 5;
+localparam PCA_MODE1_SUB3 = 6;
+localparam PCA_MODE1_ALLCALL = 7;
+
+localparam PCA_MODE2_INVRT = 11;
+localparam PCA_MODE2_OCH = 12;
+localparam PCA_MODE2_OUTDRV = 13;
+localparam PCA_MODE2_OUTNE1 = 14;
+localparam PCA_MODE2_OUTNE2 = 15;
+
 // register defaults for 0x00-0x45
 localparam PCA_DEFAULT_VALUES_LOW = {
                              {8'b00010001}, // MODE 1

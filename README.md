@@ -15,11 +15,11 @@ Current implemented functionality:
 * Custom address lines `A0`-`A5`.
 * Clock prescaler can be set to determine PWM Hertz signals.
 * Individual PWM settings for LED0 - LED15 can be set.
+* Optional External Clock Support.
 
 Known things on the todo list:
 
 * Check clock prescaler values, and only allow update in `SLEEP` mode.
-* External Clock Support.
 * Signal Inversion.
 * `_ALL_` set registers should propogate values to individual registers.
 * `ALLCALL` and `RESET` i2c addresses need to be implemented.

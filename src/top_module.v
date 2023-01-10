@@ -3,6 +3,10 @@ module top
    input        clk_i,
    input        rst_ni,
 
+   // Optional external clock for prescaler. 
+   input        ext_clk_i, 
+
+   // I2C Address set. A6 always 1.
    input [5:0]  address_i,
 
    input        scl_i,
@@ -30,9 +34,11 @@ module top
    
    );
 
+   `include "src/pca_registers.vh"
+   
    // Need a shared data store for other components to use
-   wire [7:0] write_register_id_w, write_register_value_w;
-   wire       write_enable_w;
+   wire [7:0]   write_register_id_w, write_register_value_w;
+   wire         write_enable_w;
    wire [0:2047] register_blob_w;
    wire [0:511]  register_led_w;
    
@@ -47,9 +53,13 @@ module top
                            );
 
    wire [11:0]    counter_w;
+
+   wire           prescale_clk_w;
+
+   assign prescale_clk_w = register_blob_w[PCA_MODE1_EXTCLK] ? ext_clk_i : clk_i;
    
    prescaled_counter counter (
-                  .clk_i(clk_i),
+                  .clk_i(prescale_clk_w),
                   .rst_ni(rst_ni),
                   .prescale_value(register_blob_w[8'hFE*8:8'hFE*8+7]),
                   .counter_ro(counter_w)
