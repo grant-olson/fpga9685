@@ -13,13 +13,27 @@ PWM and LED are interchangeable.
 Current implemented functionality:
 
 * Custom address lines `A0`-`A5`.
-* Clock prescaler can be set to determine PWM Hertz signals. [`PRESCALE` register]
+* `PRESCALE` Clock prescaler can be set to determine PWM Hertz signals.
 * Individual PWM settings for LED0 - LED15 can be set.
-* Optional External Clock Support. [`MODE1` retgster `EXTCLK` bit]
-* Output signal inversion. [`MODE2` register `INVRT` bit]
+* `MODE1` options:
+    * `EXTCLK` - use external clock instead of internal.
+* `MODE2` options:
+    * `INVRT` - invert PWM output.
+    * `OUTDRV` - Open Drain or Not on LEDs.
+    * `OUTNE` - When output disabled, do we send 1, 0, or high-impedance?
 
-Known things on the todo list:
+Todo:
 
+* `MODE1` options:
+    * `RESTART` force restart/init.
+    * `AI` Auto increment register counter to easily program sequentially.
+    * `SLEEP` Low power mode.
+        Isn't really applicable for FPGA since we
+        can't shut subsystems down, but other states, notably `RESET`
+        and setting the `PRESCALE` want to know if we're asleep or not.
+    * `SUB1, SUB2, SUB3` - Enable/Disable special I2C addresses provided
+        by software instead of `A0` - `A5` pins.
+    * `ALLCALL` - Enable/Disable ALLCALL I2C Address.
 * Check clock prescaler values, and only allow update in `SLEEP` mode.
 * `_ALL_` set registers should propogate values to individual registers.
 * `ALLCALL` and `RESET` i2c addresses need to be implemented.

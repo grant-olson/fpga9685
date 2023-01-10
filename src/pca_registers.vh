@@ -90,7 +90,7 @@ localparam PCA_MODE2_INVRT = 11;
 localparam PCA_MODE2_OCH = 12;
 localparam PCA_MODE2_OUTDRV = 13;
 localparam PCA_MODE2_OUTNE1 = 14;
-localparam PCA_MODE2_OUTNE2 = 15;
+localparam PCA_MODE2_OUTNE0 = 15;
 
 // register defaults for 0x00-0x45
 localparam PCA_DEFAULT_VALUES_LOW = {

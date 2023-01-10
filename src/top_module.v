@@ -9,6 +9,9 @@ module top
    // I2C Address set. A6 always 1.
    input [5:0]  address_i,
 
+   // Output enable
+   input        oe_ni ,
+   
    input        scl_i,
    inout        sda_io,
 
@@ -56,6 +59,44 @@ module top
 
    wire           prescale_clk_w;
 
+   // Support for MODE2 OUTDRV and OUTNE
+   // Tells what signal to send when Output DISabled.
+   
+   reg            led_oe_setting_r;
+   
+   wire           pwm_0_w, pwm_1_w, pwm_2_w, pwm_3_w,
+                  pwm_4_w, pwm_5_w, pwm_6_w, pwm_7_w,
+                  pwm_8_w, pwm_9_w, pwm_10_w, pwm_11_w,
+                  pwm_12_w, pwm_13_w, pwm_14_w, pwm_15_w;
+   
+
+   assign led_0_o = oe_ni ? led_oe_setting_r : pwm_0_w;
+   assign led_1_o = oe_ni ? led_oe_setting_r : pwm_1_w;
+   assign led_2_o = oe_ni ? led_oe_setting_r : pwm_2_w;
+   assign led_3_o = oe_ni ? led_oe_setting_r : pwm_3_w;
+   assign led_4_o = oe_ni ? led_oe_setting_r : pwm_4_w;
+   assign led_5_o = oe_ni ? led_oe_setting_r : pwm_5_w;
+   assign led_6_o = oe_ni ? led_oe_setting_r : pwm_6_w;
+   assign led_7_o = oe_ni ? led_oe_setting_r : pwm_7_w;
+   assign led_8_o = oe_ni ? led_oe_setting_r : pwm_8_w;
+   assign led_9_o = oe_ni ? led_oe_setting_r : pwm_9_w;
+   assign led_10_o = oe_ni ? led_oe_setting_r : pwm_10_w;
+   assign led_11_o = oe_ni ? led_oe_setting_r : pwm_11_w;
+   assign led_12_o = oe_ni ? led_oe_setting_r : pwm_12_w;
+   assign led_13_o = oe_ni ? led_oe_setting_r : pwm_13_w;
+   assign led_14_o = oe_ni ? led_oe_setting_r : pwm_14_w;
+   assign led_15_o = oe_ni ? led_oe_setting_r : pwm_15_w;
+
+   always @(*) begin
+      if (register_blob_w[PCA_MODE2_OUTNE1]) led_oe_setting_r = 1'bz;
+      else if (register_blob_w[PCA_MODE2_OUTNE0]) begin
+         // Handle open drain config if needed
+         led_oe_setting_r = register_blob_w[PCA_MODE2_OUTDRV] ? 1'b1 : 1'bz;
+      end else led_oe_setting_r = 1'b0;
+   end
+
+   // And initialize the modules
+   
    assign prescale_clk_w = register_blob_w[PCA_MODE1_EXTCLK] ? ext_clk_i : clk_i;
    
    prescaled_counter counter (
@@ -67,7 +108,8 @@ module top
 
    pwm_driver pwm1 (
                     .counter_i(counter_w),
-
+                    .invert_i(register_blob_w[PCA_MODE2_INVRT]),
+                    
                     .pwm_0_on_i(register_led_w[(0*32)+11]),
                     .pwm_0_off_i(register_led_w[(0*32)+27]),
                     .pwm_0_high_i({
@@ -78,7 +120,7 @@ module top
                                   {register_led_w[(0*32)+28:(0*32)+31]},
                                   {register_led_w[(0*32)+16:(0*32)+23]}
                                   }),
-                    .pwm_0_o(led_0_o),
+                    .pwm_0_o(pwm_0_w),
 
                     .pwm_1_on_i(register_led_w[(1*32)+11]),
                     .pwm_1_off_i(register_led_w[(1*32)+27]),
@@ -90,7 +132,7 @@ module top
                                   {register_led_w[(1*32)+28:(1*32)+31]},
                                   {register_led_w[(1*32)+16:(1*32)+23]}
                                   }),
-                    .pwm_1_o(led_1_o),
+                    .pwm_1_o(pwm_1_w),
 
                     .pwm_2_on_i(register_led_w[(2*32)+11]),
                     .pwm_2_off_i(register_led_w[(2*32)+27]),
@@ -102,7 +144,7 @@ module top
                                   {register_led_w[(2*32)+28:(2*32)+31]},
                                   {register_led_w[(2*32)+16:(2*32)+23]}
                                   }),
-                    .pwm_2_o(led_2_o),
+                    .pwm_2_o(pwm_2_w),
 
                     .pwm_3_on_i(register_led_w[(3*32)+11]),
                     .pwm_3_off_i(register_led_w[(3*32)+27]),
@@ -114,7 +156,7 @@ module top
                                   {register_led_w[(3*32)+28:(3*32)+31]},
                                   {register_led_w[(3*32)+16:(3*32)+23]}
                                   }),
-                    .pwm_3_o(led_3_o),
+                    .pwm_3_o(pwm_3_w),
 
                     .pwm_4_on_i(register_led_w[(4*32)+11]),
                     .pwm_4_off_i(register_led_w[(4*32)+27]),
@@ -126,7 +168,7 @@ module top
                                   {register_led_w[(4*32)+28:(4*32)+31]},
                                   {register_led_w[(4*32)+16:(4*32)+23]}
                                   }),
-                    .pwm_4_o(led_4_o),
+                    .pwm_4_o(pwm_4_w),
 
                     .pwm_5_on_i(register_led_w[(5*32)+11]),
                     .pwm_5_off_i(register_led_w[(5*32)+27]),
@@ -138,7 +180,7 @@ module top
                                   {register_led_w[(5*32)+28:(5*32)+31]},
                                   {register_led_w[(5*32)+16:(5*32)+23]}
                                   }),
-                    .pwm_5_o(led_5_o),
+                    .pwm_5_o(pwm_5_w),
 
                     .pwm_6_on_i(register_led_w[(6*32)+11]),
                     .pwm_6_off_i(register_led_w[(6*32)+27]),
@@ -150,7 +192,7 @@ module top
                                   {register_led_w[(6*32)+28:(6*32)+31]},
                                   {register_led_w[(6*32)+16:(6*32)+23]}
                                   }),
-                    .pwm_6_o(led_6_o),
+                    .pwm_6_o(pwm_6_w),
 
                     .pwm_7_on_i(register_led_w[(7*32)+11]),
                     .pwm_7_off_i(register_led_w[(7*32)+27]),
@@ -162,7 +204,7 @@ module top
                                   {register_led_w[(7*32)+28:(7*32)+31]},
                                   {register_led_w[(7*32)+16:(7*32)+23]}
                                   }),
-                    .pwm_7_o(led_7_o),
+                    .pwm_7_o(pwm_7_w),
 
                     .pwm_8_on_i(register_led_w[(8*32)+11]),
                     .pwm_8_off_i(register_led_w[(8*32)+27]),
@@ -174,7 +216,7 @@ module top
                                   {register_led_w[(8*32)+28:(8*32)+31]},
                                   {register_led_w[(8*32)+16:(8*32)+23]}
                                   }),
-                    .pwm_8_o(led_8_o),
+                    .pwm_8_o(pwm_8_w),
 
                     .pwm_9_on_i(register_led_w[(9*32)+11]),
                     .pwm_9_off_i(register_led_w[(9*32)+27]),
@@ -186,7 +228,7 @@ module top
                                   {register_led_w[(9*32)+28:(9*32)+31]},
                                   {register_led_w[(9*32)+16:(9*32)+23]}
                                   }),
-                    .pwm_9_o(led_9_o),
+                    .pwm_9_o(pwm_9_w),
 
                     .pwm_10_on_i(register_led_w[(10*32)+11]),
                     .pwm_10_off_i(register_led_w[(10*32)+27]),
@@ -198,7 +240,7 @@ module top
                                   {register_led_w[(10*32)+28:(10*32)+31]},
                                   {register_led_w[(10*32)+16:(10*32)+23]}
                                   }),
-                    .pwm_10_o(led_10_o),
+                    .pwm_10_o(pwm_10_w),
 
                     .pwm_11_on_i(register_led_w[(11*32)+11]),
                     .pwm_11_off_i(register_led_w[(11*32)+27]),
@@ -210,7 +252,7 @@ module top
                                   {register_led_w[(11*32)+28:(11*32)+31]},
                                   {register_led_w[(11*32)+16:(11*32)+23]}
                                   }),
-                    .pwm_11_o(led_11_o),
+                    .pwm_11_o(pwm_11_w),
 
                     .pwm_12_on_i(register_led_w[(12*32)+11]),
                     .pwm_12_off_i(register_led_w[(12*32)+27]),
@@ -222,7 +264,7 @@ module top
                                   {register_led_w[(12*32)+28:(12*32)+31]},
                                   {register_led_w[(12*32)+16:(12*32)+23]}
                                   }),
-                    .pwm_12_o(led_12_o),
+                    .pwm_12_o(pwm_12_w),
 
                     .pwm_13_on_i(register_led_w[(13*32)+11]),
                     .pwm_13_off_i(register_led_w[(13*32)+27]),
@@ -234,7 +276,7 @@ module top
                                   {register_led_w[(13*32)+28:(13*32)+31]},
                                   {register_led_w[(13*32)+16:(13*32)+23]}
                                   }),
-                    .pwm_13_o(led_13_o),
+                    .pwm_13_o(pwm_13_w),
 
                     .pwm_14_on_i(register_led_w[(14*32)+11]),
                     .pwm_14_off_i(register_led_w[(14*32)+27]),
@@ -246,7 +288,7 @@ module top
                                   {register_led_w[(14*32)+28:(14*32)+31]},
                                   {register_led_w[(14*32)+16:(14*32)+23]}
                                   }),
-                    .pwm_14_o(led_14_o),
+                    .pwm_14_o(pwm_14_w),
 
                     .pwm_15_on_i(register_led_w[(15*32)+11]),
                     .pwm_15_off_i(register_led_w[(15*32)+27]),
@@ -258,7 +300,7 @@ module top
                                   {register_led_w[(15*32)+28:(15*32)+31]},
                                   {register_led_w[(15*32)+16:(15*32)+23]}
                                   }),
-                    .pwm_15_o(led_15_o)
+                    .pwm_15_o(pwm_15_w)
                     
                     );
 
