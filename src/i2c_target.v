@@ -149,6 +149,7 @@ module i2c_target
                  sda_r <= 1'bz; // Clear out ACK
                  counter_r <= counter_r + 1'b1;
               end
+              
               SEND_REGISTER_VALUE: begin
                  counter_r <= counter_r + 1'b1;
                  sda_r <= register_value_r[7] ? 1'bz : 1'b0;
@@ -215,9 +216,16 @@ module i2c_target
                        
                     end
                     
-                    // Assume we only get one byte, don't check to
-                    // see if controller is sending more.
-                    post_ack_state <= IGNORE;
+                    // The AI register lets you write multiple
+                    // sequential values in one i2c message packet.
+                    // Automatically move to next resister and
+                    // keep trying until we get a STOP condition.
+                    // if its on.
+                    if (register_blob_i[PCA_MODE1_AI]) begin
+                       register_id_r <= register_id_r + 1'b1;
+                       post_ack_state <= RECV_REGISTER_VALUE;
+                    end else post_ack_state <= IGNORE;
+                    
                     state <= ACK; 
                  end // if (counter_r == 8)
                  

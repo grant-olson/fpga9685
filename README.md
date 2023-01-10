@@ -22,6 +22,9 @@ Current implemented functionality:
     * `SUB1, SUB2, SUB3` - Enable/Disable special I2C addresses provided
         by software instead of `A0` - `A5` pins.
     * `ALLCALL` - Enable/Disable ALLCALL I2C Address.
+    * `AI` Auto increment register counter to easily program sequentially.
+        For example enable LED PWM signal with one i2c command instead of
+        four: `i2cset -y 1 0x40 0x06 0x04 0x04 0x08 0x08 i`
 * `MODE2` options:
     * `INVRT` - invert PWM output.
     * `OUTDRV` - Open Drain or Not on LEDs.
@@ -31,7 +34,6 @@ Todo:
 
 * `MODE1` options:
     * `RESTART` force restart/init.
-    * `AI` Auto increment register counter to easily program sequentially.
     * `SLEEP` Low power mode.
         Isn't really applicable for FPGA since we
         can't shut subsystems down, but other states, notably `RESET`
