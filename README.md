@@ -15,8 +15,13 @@ Current implemented functionality:
 * Custom address lines `A0`-`A5`.
 * `PRESCALE` Clock prescaler can be set to determine PWM Hertz signals.
 * Individual PWM settings for LED0 - LED15 can be set.
+* Registers `SUBADR1`, `SUBADR2`, `SUBADR3` and `ALLCALLADR` for custom
+    sofware i2c addresses.
 * `MODE1` options:
     * `EXTCLK` - use external clock instead of internal.
+    * `SUB1, SUB2, SUB3` - Enable/Disable special I2C addresses provided
+        by software instead of `A0` - `A5` pins.
+    * `ALLCALL` - Enable/Disable ALLCALL I2C Address.
 * `MODE2` options:
     * `INVRT` - invert PWM output.
     * `OUTDRV` - Open Drain or Not on LEDs.
@@ -31,12 +36,9 @@ Todo:
         Isn't really applicable for FPGA since we
         can't shut subsystems down, but other states, notably `RESET`
         and setting the `PRESCALE` want to know if we're asleep or not.
-    * `SUB1, SUB2, SUB3` - Enable/Disable special I2C addresses provided
-        by software instead of `A0` - `A5` pins.
-    * `ALLCALL` - Enable/Disable ALLCALL I2C Address.
 * Check clock prescaler values, and only allow update in `SLEEP` mode.
 * `_ALL_` set registers should propogate values to individual registers.
-* `ALLCALL` and `RESET` i2c addresses need to be implemented.
+* `RESET` i2c addresses need to be implemented.
 * More, I'm sure...
 
 ## Custom Addresses

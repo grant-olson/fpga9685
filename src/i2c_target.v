@@ -21,7 +21,8 @@ module i2c_target
    
    );
 
-
+   `include "src/pca_registers.vh"
+   
    reg          sda_r = 1'bz;
    assign sda_io = sda_r;
 
@@ -90,7 +91,39 @@ module i2c_target
    reg [7:0] register_id_r;
    reg [7:0] register_value_r;
 
+
    
+   wire      subadr1_w, subadr2_w, subadr3_w,
+             allcall_w, valid_address_w;
+
+   assign subadr1_w = (
+                       register_blob_i[PCA_MODE1_SUB1] &&
+                       address_r == register_blob_i[PCA_SUBADR1*8:
+                                                    PCA_SUBADR1*8+6]
+                       );
+   
+   assign subadr2_w = (
+                       register_blob_i[PCA_MODE1_SUB2] &&
+                       address_r == register_blob_i[PCA_SUBADR2*8:
+                                                    PCA_SUBADR2*8+6]
+                       );
+   
+   assign subadr3_w = (
+                       register_blob_i[PCA_MODE1_SUB3] &&
+                       address_r == register_blob_i[PCA_SUBADR3*8:
+                                                    PCA_SUBADR3*8+6]
+                       );
+   
+   assign allcall_w = (
+                       register_blob_i[PCA_MODE1_ALLCALL] &&
+                       address_r == register_blob_i[PCA_ALLCALLADR*8:
+                                                    PCA_ALLCALLADR*8+6]
+                       );
+   
+   assign valid_address_w = (address_r == assigned_address_i) |
+                            subadr1_w | subadr2_w | subadr3_w | allcall_w;
+   
+                            
    always @(posedge clk_i) begin
       if (scl_edge) begin
          if (~scl_i) begin // Negative edge, get ready for clock
@@ -151,7 +184,7 @@ module i2c_target
                  else post_ack_state <= RECV_REGISTER_ID;
 
                  // Check that it's talking to us
-                 if (address_r == assigned_address_i) state <= ACK;
+                 if (valid_address_w) state <= ACK;
                  else state <= IGNORE;
                  
                  counter_r <= 8'b0;
