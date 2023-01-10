@@ -7,14 +7,16 @@ module single_pwm_driver
    input [11:0] high_i,
    input [11:0] low_i,
 
+   input        invert_i,
+   
    output reg   pwm_o
    );
 
    always @(*) begin
-      if (on_i) pwm_o = 1'b1;
-      else if (off_i) pwm_o = 1'b0;
-      else if (counter_i >= high_i && counter_i < low_i) pwm_o = 1'b1;
-      else pwm_o = 1'b0;
+      if (on_i) pwm_o = invert_i ? 1'b0 : 1'b1;
+      else if (off_i) pwm_o = invert_i ? 1'b1 : 1'b0;
+      else if (counter_i >= high_i && counter_i < low_i) pwm_o = invert_i ? 1'b0 : 1'b1;
+      else pwm_o = invert_i ? 1'b1 : 1'b0;
    end
 
    
@@ -23,6 +25,8 @@ endmodule // single_pwm_driver
 module pwm_driver
   (
    input [11:0] counter_i,
+
+   input        invert_i,
    
    input        pwm_0_on_i,
    input        pwm_0_off_i,
@@ -139,6 +143,7 @@ module pwm_driver
 
    single_pwm_driver led0 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_0_on_i),
                            .off_i(pwm_0_off_i),
@@ -149,6 +154,7 @@ module pwm_driver
    
    single_pwm_driver led1 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_1_on_i),
                            .off_i(pwm_1_off_i),
@@ -159,6 +165,7 @@ module pwm_driver
    
    single_pwm_driver led2 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_2_on_i),
                            .off_i(pwm_2_off_i),
@@ -169,6 +176,7 @@ module pwm_driver
    
    single_pwm_driver led3 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_3_on_i),
                            .off_i(pwm_3_off_i),
@@ -180,6 +188,7 @@ module pwm_driver
   
    single_pwm_driver led4 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_4_on_i),
                            .off_i(pwm_4_off_i),
@@ -190,6 +199,7 @@ module pwm_driver
    
    single_pwm_driver led5 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_5_on_i),
                            .off_i(pwm_5_off_i),
@@ -200,6 +210,7 @@ module pwm_driver
    
    single_pwm_driver led6 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_6_on_i),
                            .off_i(pwm_6_off_i),
@@ -210,6 +221,7 @@ module pwm_driver
    
    single_pwm_driver led7 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_7_on_i),
                            .off_i(pwm_7_off_i),
@@ -220,6 +232,7 @@ module pwm_driver
    
    single_pwm_driver led8 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_8_on_i),
                            .off_i(pwm_8_off_i),
@@ -230,6 +243,7 @@ module pwm_driver
    
    single_pwm_driver led9 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_9_on_i),
                            .off_i(pwm_9_off_i),
@@ -240,6 +254,7 @@ module pwm_driver
    
    single_pwm_driver led10 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_10_on_i),
                            .off_i(pwm_10_off_i),
@@ -250,6 +265,7 @@ module pwm_driver
    
    single_pwm_driver led11 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_11_on_i),
                            .off_i(pwm_11_off_i),
@@ -260,6 +276,7 @@ module pwm_driver
    
    single_pwm_driver led12 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_12_on_i),
                            .off_i(pwm_12_off_i),
@@ -270,6 +287,7 @@ module pwm_driver
    
    single_pwm_driver led13 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_13_on_i),
                            .off_i(pwm_13_off_i),
@@ -280,6 +298,7 @@ module pwm_driver
    
    single_pwm_driver led14 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_14_on_i),
                            .off_i(pwm_14_off_i),
@@ -290,6 +309,7 @@ module pwm_driver
    
    single_pwm_driver led15 (
                            .counter_i(counter_i),
+                           .invert_i(invert_i),
                            
                            .on_i(pwm_15_on_i),
                            .off_i(pwm_15_off_i),

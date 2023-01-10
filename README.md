@@ -13,14 +13,14 @@ PWM and LED are interchangeable.
 Current implemented functionality:
 
 * Custom address lines `A0`-`A5`.
-* Clock prescaler can be set to determine PWM Hertz signals.
+* Clock prescaler can be set to determine PWM Hertz signals. [`PRESCALE` register]
 * Individual PWM settings for LED0 - LED15 can be set.
-* Optional External Clock Support.
+* Optional External Clock Support. [`MODE1` retgster `EXTCLK` bit]
+* Output signal inversion. [`MODE2` register `INVRT` bit]
 
 Known things on the todo list:
 
 * Check clock prescaler values, and only allow update in `SLEEP` mode.
-* Signal Inversion.
 * `_ALL_` set registers should propogate values to individual registers.
 * `ALLCALL` and `RESET` i2c addresses need to be implemented.
 * More, I'm sure...

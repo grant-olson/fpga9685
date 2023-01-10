@@ -20,7 +20,8 @@ module pwm_driver_tb
    
    pwm_driver ld1 (
                    .counter_i(counter_r),
-
+                   .invert_i(1'b0),
+                   
                    // Always On
                    .pwm_0_on_i(1'b1),
                    .pwm_0_o(pwm_0_w),
