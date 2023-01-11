@@ -70,14 +70,7 @@ module register_data
          dirty_flags_r <= {{1'b0}};
          
       end else if (write_enable_i) begin
-         register_blob_o[write_register_id_i*8] <= write_register_value_i[7];
-         register_blob_o[write_register_id_i*8+1] <= write_register_value_i[6];
-         register_blob_o[write_register_id_i*8+2] <= write_register_value_i[5];
-         register_blob_o[write_register_id_i*8+3] <= write_register_value_i[4];
-         register_blob_o[write_register_id_i*8+4] <= write_register_value_i[3];
-         register_blob_o[write_register_id_i*8+5] <= write_register_value_i[2];
-         register_blob_o[write_register_id_i*8+6] <= write_register_value_i[1];
-         register_blob_o[write_register_id_i*8+7] <= write_register_value_i[0];
+         register_blob_o[(write_register_id_i*8) +: 8] <= write_register_value_i[7:0];
 
          if (led_reg_w) begin
             dirty_flags_r[write_register_id_i - PCA_LED_0_ON_L] <= 1;
@@ -87,166 +80,85 @@ module register_data
 
          // It seems there HAS to be a way to do this without cut and paste,
          // but I haven't figured that out yet.
-         if (dirty_flags_r[PCA_LED_0_ON_L-OFFSET:PCA_LED_0_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_0_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_0_ON_L-OFFSET:PCA_LED_0_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_0_ON_L-OFFSET)*8:(PCA_LED_0_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_0_ON_L*8):(PCA_LED_0_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_0_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_0_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_1_ON_L-OFFSET:PCA_LED_1_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_1_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_1_ON_L-OFFSET:PCA_LED_1_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_1_ON_L-OFFSET)*8:(PCA_LED_1_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_1_ON_L*8):(PCA_LED_1_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_1_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_1_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_2_ON_L-OFFSET:PCA_LED_2_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_2_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_2_ON_L-OFFSET:PCA_LED_2_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_2_ON_L-OFFSET)*8:(PCA_LED_2_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_2_ON_L*8):(PCA_LED_2_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_2_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_2_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_3_ON_L-OFFSET:PCA_LED_3_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_3_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_3_ON_L-OFFSET:PCA_LED_3_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_3_ON_L-OFFSET)*8:(PCA_LED_3_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_3_ON_L*8):(PCA_LED_3_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_3_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_3_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_4_ON_L-OFFSET:PCA_LED_4_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_4_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_4_ON_L-OFFSET:PCA_LED_4_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_4_ON_L-OFFSET)*8:(PCA_LED_4_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_4_ON_L*8):(PCA_LED_4_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_4_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_4_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_5_ON_L-OFFSET:PCA_LED_5_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_5_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_5_ON_L-OFFSET:PCA_LED_5_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_5_ON_L-OFFSET)*8:(PCA_LED_5_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_5_ON_L*8):(PCA_LED_5_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_5_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_5_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_6_ON_L-OFFSET:PCA_LED_6_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_6_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_6_ON_L-OFFSET:PCA_LED_6_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_6_ON_L-OFFSET)*8:(PCA_LED_6_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_6_ON_L*8):(PCA_LED_6_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_6_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_6_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_7_ON_L-OFFSET:PCA_LED_7_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_7_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_7_ON_L-OFFSET:PCA_LED_7_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_7_ON_L-OFFSET)*8:(PCA_LED_7_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_7_ON_L*8):(PCA_LED_7_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_7_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_7_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_8_ON_L-OFFSET:PCA_LED_8_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_8_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_8_ON_L-OFFSET:PCA_LED_8_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_8_ON_L-OFFSET)*8:(PCA_LED_8_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_8_ON_L*8):(PCA_LED_8_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_8_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_8_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_9_ON_L-OFFSET:PCA_LED_9_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_9_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_9_ON_L-OFFSET:PCA_LED_9_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_9_ON_L-OFFSET)*8:(PCA_LED_9_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_9_ON_L*8):(PCA_LED_9_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_9_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_9_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_10_ON_L-OFFSET:PCA_LED_10_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_10_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_10_ON_L-OFFSET:PCA_LED_10_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_10_ON_L-OFFSET)*8:(PCA_LED_10_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_10_ON_L*8):(PCA_LED_10_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_10_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_10_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_11_ON_L-OFFSET:PCA_LED_11_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_11_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_11_ON_L-OFFSET:PCA_LED_11_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_11_ON_L-OFFSET)*8:(PCA_LED_11_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_11_ON_L*8):(PCA_LED_11_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_11_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_11_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_12_ON_L-OFFSET:PCA_LED_12_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_12_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_12_ON_L-OFFSET:PCA_LED_12_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_12_ON_L-OFFSET)*8:(PCA_LED_12_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_12_ON_L*8):(PCA_LED_12_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_12_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_12_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_13_ON_L-OFFSET:PCA_LED_13_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_13_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_13_ON_L-OFFSET:PCA_LED_13_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_13_ON_L-OFFSET)*8:(PCA_LED_13_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_13_ON_L*8):(PCA_LED_13_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_13_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_13_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_14_ON_L-OFFSET:PCA_LED_14_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_14_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_14_ON_L-OFFSET:PCA_LED_14_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_14_ON_L-OFFSET)*8:(PCA_LED_14_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_14_ON_L*8):(PCA_LED_14_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_14_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_14_ON_L*8) +: 31];
          end
 
-         if (dirty_flags_r[PCA_LED_15_ON_L-OFFSET:PCA_LED_15_OFF_H-OFFSET]
-             == 4'b1111) begin
+         if (dirty_flags_r[(PCA_LED_15_ON_L-OFFSET) +: 4] == 4'b1111) begin
             dirty_flags_r[PCA_LED_15_ON_L-OFFSET:PCA_LED_15_OFF_H-OFFSET] <= 4'b0000;
-
-            register_led_o[
-                           (PCA_LED_15_ON_L-OFFSET)*8:(PCA_LED_15_ON_L-OFFSET)*8+31
-                           ] <= register_blob_o[(PCA_LED_15_ON_L*8):(PCA_LED_15_ON_L*8)+31];
-            
+            register_led_o[8*(PCA_LED_15_ON_L-OFFSET) +:31] <= register_blob_o[(PCA_LED_15_ON_L*8) +: 31];
          end
-
 
          
       end // else: !if(write_enable_i)
