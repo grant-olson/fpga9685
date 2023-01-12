@@ -5,6 +5,8 @@ This project reimplements the behavior of the venerable PCA9685
 FPGAs. The PCA9685 is used by hobbyists around the world to drive
 multiple servos from a microcontroller while minimizing GPIO usage.
 
+I used [NXP's public descriptions and datasheet](https://www.nxp.com/products/power-management/lighting-driver-and-controller-ics/led-controllers/16-channel-12-bit-pwm-fm-plus-ic-bus-led-controller:PCA9685)  as the sole specification to build out the design.
+
 The manufacturer describes the chip as a PWM LED controller. To be
 consistent with the documentation in the datasheet we will frequently
 refer to PWM pins as LED pins, such as `LED0`. In practice the terms
