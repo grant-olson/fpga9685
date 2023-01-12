@@ -17,6 +17,7 @@ Current implemented functionality:
 * Individual PWM settings for LED0 - LED15 can be set.
 * Registers `SUBADR1`, `SUBADR2`, `SUBADR3` and `ALLCALLADR` for custom
     sofware i2c addresses.
+* `PCA_ALL_ON_L` etc registers automatically set `LED0` - `LED15`
 * `MODE1` options:
     * `EXTCLK` - use external clock instead of internal.
     * `SUB1, SUB2, SUB3` - Enable/Disable special I2C addresses provided
@@ -39,8 +40,7 @@ Todo:
         can't shut subsystems down, but other states, notably `RESET`
         and setting the `PRESCALE` want to know if we're asleep or not.
 * Check clock prescaler values, and only allow update in `SLEEP` mode.
-* `_ALL_` set registers should propogate values to individual registers.
-* `RESET` i2c addresses need to be implemented.
+* `RESET` i2c address needs to be implemented.
 * More, I'm sure...
 
 ## Custom Addresses
@@ -80,7 +80,7 @@ Nano 9k with a clock speed of 27 Mhz.
 
 ```
 27 MHz
---------- - 1 = **131.8** *rounded to **132**
+--------- - 1 = 131.8 rounded to 132
 4096 * 50
 
 ```
@@ -91,8 +91,9 @@ A Makefile is provided to run test benches in Icarus Verilog. Since
 your choice of FPGA will likely determine the IDE you use to compile a
 working system, the Makefile does not attempt to automate this.
 
-To run a test run `make *module_name*_gtk`. This should figure
-everything out and open the results in `gtkwave` for your review.
+To run a test run for a module run `make *module_name*_gtkwave`. This
+should figure everything out and open the results in `gtkwave` for
+your review.
 
 ## I2C SDA Open Drain Test
 

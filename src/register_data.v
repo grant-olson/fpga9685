@@ -76,6 +76,17 @@ module register_data
          if (led_reg_w) begin
             dirty_flags_r[write_register_id_i - PCA_LED_0_ON_L] <= 1;
          end
+
+         if (write_register_id_i >= PCA_ALL_LED_ON_L &&
+             write_register_id_i <= PCA_ALL_LED_OFF_H) begin
+            for (i = 0; i < 64; i = i + 4) begin
+               register_blob_o[(write_register_id_i-PCA_ALL_LED_ON_L
+                                +PCA_LED_0_ON_L+i)*8 +: 8] <= write_register_value_i[7:0];
+               dirty_flags_r[write_register_id_i-PCA_ALL_LED_ON_L+i] <= 1'b1;
+            end
+            
+         end
+         
          
       end else begin // if (write_enable_i)
 
@@ -86,7 +97,7 @@ module register_data
             if (dirty_flags_r[4*(PCA_LED_0_ON_L-OFFSET+i) +: 4] == 4'b1111) begin
                dirty_flags_r[4*(PCA_LED_0_ON_L-OFFSET+i) +: 4] <= 4'b0000;
                // (i*4) because we have ON_L, ON_H, OFF_L, OFF_H = 4 bytes per group
-               register_led_o[8*(PCA_LED_0_ON_L-OFFSET+(i*4)) +: 31] <= register_blob_o[8*(PCA_LED_0_ON_L+(i*4)) +: 31];
+               register_led_o[8*(PCA_LED_0_ON_L-OFFSET+(i*4)) +: 32] <= register_blob_o[8*(PCA_LED_0_ON_L+(i*4)) +: 32];
             end
          end
          

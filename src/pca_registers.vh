@@ -72,7 +72,7 @@ localparam PCA_LED_15_OFF_H = 8'h45;
 localparam PCA_ALL_LED_ON_L = 8'hFA;
 localparam PCA_ALL_LED_ON_H = 8'hFB;
 localparam PCA_ALL_LED_OFF_L = 8'hFC;
-localparam PCA_ALL_LED_OFFH = 8'hFD;
+localparam PCA_ALL_LED_OFF_H = 8'hFD;
 localparam PCA_PRE_SCALE = 8'hFE;
 localparam PCA_TEST_MODE = 8'hFF;
 

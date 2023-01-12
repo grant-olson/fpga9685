@@ -81,6 +81,38 @@ module register_data_tb
    
       #10;
 
+      $display("Write an ALL value, see if it sets all and dirty flags");
+
+      #1 write_register_id_r <= 8'hFC;
+      write_register_value_r <= 8'hBE;
+      
+      #1 write_enable_r <= 1;
+      #5 write_enable_r <= 0;
+   
+
+      $display("And the rest see if atomic update happens");
+
+      #1 write_register_id_r <= 8'hFD;
+      write_register_value_r <= 8'hEF;
+      
+      #1 write_enable_r <= 1;
+      #5 write_enable_r <= 0;
+   
+      #1 write_register_id_r <= 8'hFA;
+      write_register_value_r <= 8'hDE;
+      
+      #1 write_enable_r <= 1;
+      #5 write_enable_r <= 0;
+
+
+      #1 write_register_id_r <= 8'hFB;
+      write_register_value_r <= 8'h4D;
+      
+      #1 write_enable_r <= 1;
+      #5 write_enable_r <= 0;
+
+      #1000; // So gtkwave doesn't truncate result
+
   
       $finish();
    end
