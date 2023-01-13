@@ -209,11 +209,22 @@ module i2c_target
                     
                     counter_r <= 8'd0;
 
-                    if (register_id_r < REGISTERS) begin
+                    if (register_id_r == PCA_PRE_SCALE && 
+                        (~register_blob_i[PCA_MODE1_SLEEP] || 
+                         {register_value_r[6:0], sda_io} < 8'h03 || 
+                         {register_value_r[6:0], sda_io} > 8'hFE)) begin
+                       // We're either not in SLEEP mode as required,
+                       // or we're writing an invalid value.
+                       //
+                       // TODO: Should this force a NACK?
+                       state <= IGNORE;
+                       
+                    end else if (register_id_r < REGISTERS) begin
                        write_register_id_o <= register_id_r;
                        write_register_value_o <= {register_value_r[6:0], sda_io};
                        write_enable_o <= 1'b1;
                        
+                       state <= ACK; 
                     end
                     
                     // The AI register lets you write multiple
@@ -226,7 +237,6 @@ module i2c_target
                        post_ack_state <= RECV_REGISTER_VALUE;
                     end else post_ack_state <= IGNORE;
                     
-                    state <= ACK; 
                  end // if (counter_r == 8)
                  
               end // case: RECV_REGISTER_VALUE

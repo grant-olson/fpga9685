@@ -21,7 +21,6 @@ Current implemented functionality:
     sofware i2c addresses.
 * `PCA_ALL_ON_L` etc registers automatically set `LED0` - `LED15`
 * `MODE1` options:
-    * `EXTCLK` - use external clock instead of internal.
     * `SUB1, SUB2, SUB3` - Enable/Disable special I2C addresses provided
         by software instead of `A0` - `A5` pins.
     * `ALLCALL` - Enable/Disable ALLCALL I2C Address.
@@ -36,12 +35,14 @@ Current implemented functionality:
 Todo:
 
 * `MODE1` options:
-    * `RESTART` force restart/init.
+    * `RESTART` Resume last PWM state after coming out of sleep.
+    * `EXTCLK` - use external clock instead of internal.
+        Partially implemented. Can be turned on any time when it should
+        only but turned on when SLEEPing, and then can't be turned off
+        without a reboot.
     * `SLEEP` Low power mode.
-        Isn't really applicable for FPGA since we
-        can't shut subsystems down, but other states, notably `RESET`
-        and setting the `PRESCALE` want to know if we're asleep or not.
-* Check clock prescaler values, and only allow update in `SLEEP` mode.
+        Partiallly implemented. Still needs RESTART logic.
+* `MODE2` option `OCH` only runs in output changes on ACK mode.
 * `RESET` i2c address needs to be implemented.
 * More, I'm sure...
 
