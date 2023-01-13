@@ -52,7 +52,8 @@ module top
    wire [0:15]    pwm_w;
    
 
-   assign led_o = oe_ni ? led_oe_setting_r : pwm_w;
+   assign led_o = (register_blob_w[PCA_MODE1_SLEEP] | oe_ni) ? 
+                  led_oe_setting_r : pwm_w;
 
    always @(*) begin
       if (register_blob_w[PCA_MODE2_OUTNE1]) led_oe_setting_r = {{1'bz}};
@@ -63,8 +64,13 @@ module top
    end
 
    // And initialize the modules
+
+   assign clock_multiplex_w = register_blob_w[PCA_MODE1_EXTCLK] ? 
+                              ext_clk_i : clk_i;
    
-   assign prescale_clk_w = register_blob_w[PCA_MODE1_EXTCLK] ? ext_clk_i : clk_i;
+   assign prescale_clk_w = register_blob_w[PCA_MODE1_SLEEP] ? 
+                           1'b0 : clock_multiplex_w;
+   
    
    prescaled_counter counter (
                   .clk_i(prescale_clk_w),
