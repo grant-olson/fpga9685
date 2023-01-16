@@ -92,7 +92,7 @@ Nano 9k with a clock speed of 27 Mhz.
 
 ```
 
-## Makefile
+## Makefile tests
 
 A Makefile is provided to run test benches in Icarus Verilog. Since
 your choice of FPGA will likely determine the IDE you use to compile a
@@ -101,6 +101,13 @@ working system, the Makefile does not attempt to automate this.
 To run a test run for a module run `make *module_name*_gtkwave`. This
 should figure everything out and open the results in `gtkwave` for
 your review.
+
+## Functional tests
+
+A series of scripts to automate functional testing of a programmed
+FPGA are in the `i2ctools-tests` directory. These bash scripts use
+`i2ctransfer` to run a set of scripted actions. Verification will
+require use of an oscilloscope for some tests.
 
 ## I2C SDA Open Drain Test
 
