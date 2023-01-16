@@ -13,11 +13,9 @@ module i2c_target
    output reg [7:0] write_register_value_o,
    output reg       write_enable_o,
    input [0:2047]   register_blob_i,
-   
-   // To track state with a hardware logic analyzer
-   // for debugging. Not needed when not debugging
-   output           dbg_start_o,
-   output [3:0]     dbg_state_o
+
+   // Software reset
+   output reg       soft_rst_no = 1'b1
    
    );
 
@@ -75,7 +73,6 @@ module i2c_target
    // change to SDA happens while SCL is pulled low.
    wire      start_stop_edge;
    assign start_stop_edge = scl_i & sda_edge;
-   assign dbg_start_o = start_stop_edge;
 
    // Quick routine to track these.
    always @(posedge clk_i) begin
@@ -103,8 +100,6 @@ module i2c_target
    
    reg [7:0] state = RECV_ADDRESS;
    reg [7:0] post_ack_state;
-
-   assign dbg_state_o = state[3:0];
 
    parameter   REGISTERS = 256;
    
@@ -145,9 +140,19 @@ module i2c_target
                        address_r == register_blob_i[PCA_ALLCALLADR*8:
                                                     PCA_ALLCALLADR*8+6]
                        );
+
+
+   // Software reset address. Must be sent with WRITE bit, but
+   // the register isn't set at this point so check sda_io directly.
+   localparam RESET_ADDRESS = 7'b0000000;
+   localparam RESET_MAGIC = 8'h06; // Use this to verify reset is intentional
+   
+   assign reset_w = ( address_r == RESET_ADDRESS && ~sda_io);
+   
    
    assign valid_address_w = (address_r == assigned_address_i) |
-                            subadr1_w | subadr2_w | subadr3_w | allcall_w;
+                            subadr1_w | subadr2_w | subadr3_w | allcall_w |
+                            reset_w;
    
                             
    always @(posedge clk_i) begin
@@ -222,7 +227,13 @@ module i2c_target
                  if (counter_r == 8) begin
                     counter_r <= 8'd0;
 
-                    post_ack_state <= RECV_REGISTER_VALUE;
+                    if (address_r == RESET_ADDRESS) begin
+                       post_ack_state <= IGNORE;
+
+                       if ({register_id_r[6:0], sda_io} == RESET_MAGIC) begin
+                          soft_rst_no <= 0;
+                       end
+                    end else post_ack_state <= RECV_REGISTER_VALUE;
                     
                     state <= ACK;
                  end
@@ -303,7 +314,8 @@ module i2c_target
          
          if (sda_io) state <= IGNORE; // Went LOW to HIGH - STOP
          else state <= RECV_ADDRESS; // HIGH to LOW - START
-      end
+      
+      end else if (~soft_rst_no) soft_rst_no <= 1'b1;
       
       
    end // always @ (posedge clk_i)

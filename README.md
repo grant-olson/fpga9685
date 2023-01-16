@@ -31,6 +31,8 @@ Current implemented functionality:
     * `INVRT` - invert PWM output.
     * `OUTDRV` - Open Drain or Not on LEDs.
     * `OUTNE` - When output disabled, do we send 1, 0, or high-impedance?
+* `RESET` i2c address. Write data byte `0x06` to i2c address `0x00` for
+    software reset.
 
 Todo:
 
@@ -43,7 +45,6 @@ Todo:
     * `SLEEP` Low power mode.
         Partiallly implemented. Still needs RESTART logic.
 * `MODE2` option `OCH` only runs in output changes on ACK mode.
-* `RESET` i2c address needs to be implemented.
 * More, I'm sure...
 
 ## Custom Addresses

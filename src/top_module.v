@@ -15,10 +15,7 @@ module top
    input         scl_i,
    inout         sda_io,
 
-   output [0:15] led_o,
-   
-   output        dbg_start_o,
-   output [3:0]  dbg_state_o
+   output [0:15] led_o
    
    );
 
@@ -29,15 +26,20 @@ module top
    wire         write_enable_w;
    wire [0:2047] register_blob_w;
    wire [0:511]  register_led_w;
+
+   wire          i2c_soft_rst_nw, reg_data_rst_nw;
+   // If either one is low, do a reset.
+   assign reg_data_rst_nw = i2c_soft_rst_nw & rst_ni;
    
    register_data reg_data (
                            .clk_i(clk_i),
-                           .rst_ni(rst_ni),
+                           .rst_ni(reg_data_rst_nw),
                            .write_register_id_i(write_register_id_w),
                            .write_register_value_i(write_register_value_w),
                            .write_enable_i(write_enable_w),
                            .register_blob_o(register_blob_w),
                            .register_led_o(register_led_w)
+                           
                            );
 
    wire [11:0]    counter_w;
@@ -286,16 +288,13 @@ module top
                   .scl_i(scl_i),
                   .sda_io(sda_io),
 
-                      .write_register_id_o(write_register_id_w),
-                      .write_register_value_o(write_register_value_w),
-                      .write_enable_o(write_enable_w),
-                      .register_blob_i(register_blob_w),
+                  .write_register_id_o(write_register_id_w),
+                  .write_register_value_o(write_register_value_w),
+                  .write_enable_o(write_enable_w),
+                  .register_blob_i(register_blob_w),
 
+                  .soft_rst_no(i2c_soft_rst_nw)
                   
-                  // To track state with a hardware logic analyzer
-                  // for debugging. Not needed when not debugging
-                  .dbg_start_o(dbg_start_o),
-                  .dbg_state_o(dbg_state_o)
                   );
    
                   
