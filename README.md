@@ -31,6 +31,8 @@ Current implemented functionality:
     * `INVRT` - invert PWM output.
     * `OUTDRV` - Open Drain or Not on LEDs.
     * `OUTNE` - When output disabled, do we send 1, 0, or high-impedance?
+    * `EXTCLK` - use external clock instead of internal. Once set can't
+        be unset barring a hardware or software reset.
 * `RESET` i2c address. Write data byte `0x06` to i2c address `0x00` for
     software reset.
 
@@ -38,14 +40,15 @@ Todo:
 
 * `MODE1` options:
     * `RESTART` Resume last PWM state after coming out of sleep.
-    * `EXTCLK` - use external clock instead of internal.
-        Partially implemented. Can be turned on any time when it should
-        only but turned on when SLEEPing, and then can't be turned off
-        without a reboot.
     * `SLEEP` Low power mode.
         Partiallly implemented. Still needs RESTART logic.
 * `MODE2` option `OCH` only runs in output changes on ACK mode.
-* More, I'm sure...
+* **Power-On Reset** the real PCA9685 has hardware that forces a
+    reset on power on, so the user doesn't need to manually deal
+    with a reset pin.
+
+    My FPGA starts with correct default values
+    so this works implicitly, but may not work on other FPGAs.
 
 ## Custom Addresses
 

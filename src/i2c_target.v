@@ -241,7 +241,20 @@ module i2c_target
               end
 
               RECV_REGISTER_VALUE: begin
-                 register_value_r <= {register_value_r[6:0], sda_io};
+
+                 // Per the datasheet MODE0 Register, EXTCLK bit
+                 //  is sticky and can only be set once. 
+                 // Hack in a check here when extracting the value
+                 // to enforce this behavior
+                 if (register_id_r == 7'h00 && 
+                     counter_r == PCA_MODE1_EXTCLK + 1) begin
+                    register_value_r <= {
+                                         register_value_r[6:0], 
+                                         sda_io | 
+                                         register_blob_i[PCA_MODE1_EXTCLK]
+                                         };
+                 end else register_value_r <= {register_value_r[6:0], sda_io};
+                 
                  if (counter_r == 8) begin
                     
                     counter_r <= 8'd0;
