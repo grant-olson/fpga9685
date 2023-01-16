@@ -102,12 +102,43 @@ To run a test run for a module run `make *module_name*_gtkwave`. This
 should figure everything out and open the results in `gtkwave` for
 your review.
 
-## Functional tests
+## i2ctools Functional Tests
 
 A series of scripts to automate functional testing of a programmed
 FPGA are in the `i2ctools-tests` directory. These bash scripts use
 `i2ctransfer` to run a set of scripted actions. Verification will
 require use of an oscilloscope for some tests.
+
+Tests are set by default to run on ic2 bus 1. If your test controller
+uses a different bus set the environment variable `I2C_BUS=X`. If
+you're not sure what the bus is try `ls /dev/i2c*` to get a
+list. Before running potentially dangerous commands, run a safe test
+like `25_pct_phase_shift.sh` to make sure have the correct bus.
+
+Tests that run software resets send commands to the special i2c
+address `0x00`. This may be dangerous on a shared i2c bus. Because of
+this you will be manually prompted to decide if you want to run the
+software reset command.
+
+If you're not sure if there are other devices on the bus run
+`i2cdetect -y 1` Assuming stock device configuration the two addresses
+you'll see are the normal `0x40` address and the ALLCALL `0x70` call. If there are other devices determine what they are, and if it is safe to send commands to address `0x00`.
+
+Good. Only our device on the bus.
+
+```
+pi@pizerow:~/i2ctools $ i2cdetect -y 1
+     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+00:          -- -- -- -- -- -- -- -- -- -- -- -- -- 
+10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+40: 40 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+70: 70 -- -- -- -- -- -- --                         
+```
+
 
 ## I2C SDA Open Drain Test
 
