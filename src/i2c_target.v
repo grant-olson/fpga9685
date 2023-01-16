@@ -42,26 +42,52 @@ module i2c_target
    // We need to catch start/stop conditions, and we need to
    // do work on both SCL positive and negative edges. so lets
    // set up some stuff to track that state here.
+   //
+   // When we tried to compare just the instantaneous wire and
+   // a register storing the last clock cycle values, like:
+   //
+   // assign scl_edge = scl_i ^ last_scl_r;
+   // assign sda_edge = sda_io ^ last_scl_r;
+   //
+   // We would get failures 10-20% of the time on any requests.
+   // Switching this to two registers  and comparing TIME-1 to TIME-2
+   // seems to have eliminated that problem.
+   //
+   // Continuing to monitor and test.
+   
+   // The state from ONE clock cycle ago.
    reg              last_scl_r;
    reg              last_sda_r;
 
-   wire      scl_edge;
-   assign scl_edge = (last_scl_r ^ scl_i) ;
+   // The state of these from TWO clock cycles ago.
+   reg              last_last_scl_r;
+   reg              last_last_sda_r;
 
-   wire      sda_edge;
-   assign sda_edge = (last_sda_r ^ sda_io);
+   // XOR means we've detected an edge transition.
+   wire             scl_edge;
+   assign scl_edge = last_last_scl_r ^ last_scl_r;
+   
+   wire             sda_edge;
+   assign sda_edge = last_last_sda_r ^ last_sda_r; 
 
+   // We also need to check for edge changes when SCL is high
+   // As this is used to send START and STOP states. Any 'real'
+   // change to SDA happens while SCL is pulled low.
    wire      start_stop_edge;
    assign start_stop_edge = scl_i & sda_edge;
    assign dbg_start_o = start_stop_edge;
-   
+
+   // Quick routine to track these.
    always @(posedge clk_i) begin
-      // Update last states to catch edges
       last_sda_r <= sda_io;
       last_scl_r <= scl_i;
+      last_last_sda_r <= last_sda_r;
+      last_last_scl_r <= last_scl_r;
+      
    end
    
-   // And with that out of the way on to the real FSM
+   // And with the edge detection out of out of the way 
+   // we're on to the real FSM
    
    localparam IGNORE = 8'd0; // Wait until we get a stop signal.
    localparam COUNTER = 8'd1; // Test pattern
