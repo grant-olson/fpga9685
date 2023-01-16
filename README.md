@@ -92,6 +92,28 @@ Nano 9k with a clock speed of 27 Mhz.
 
 ```
 
+## Building
+
+Since each vendor provides its own toolchain we don't include project
+files. Create a blank project in your toolchain and add the following
+source files to it to create a working build:
+
+```
+src/i2c_target.v
+src/prescaled_counter.v
+src/pwm_driver.v
+src/register_data.v
+src/top_module.v
+```
+
+Note that there are some test files in the `src/` directory that should
+not be included:
+
+```
+src/i2c_controller.v
+src/test_open_drain.v
+```
+
 ## Makefile tests
 
 A Makefile is provided to run test benches in Icarus Verilog. Since
