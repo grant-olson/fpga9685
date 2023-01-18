@@ -25,6 +25,19 @@ module i2c_target
    reg          sda_r = 1'bz;
    assign sda_io = sda_r;
 
+   // Helper for memory. We can't pass in 2d array, so generate
+   // out an easy-to-use access.
+   wire [7:0]   register_bytes_w[0:255];
+
+   generate
+      genvar    i;
+      
+      for(i = 0; i < 256; i = i + 1) begin : make_bytes
+         assign register_bytes_w[i] = register_blob_i[i*8:i*8+7];
+      end
+   endgenerate
+
+
    // We need to catch start/stop conditions, and we need to
    // do work on both SCL positive and negative edges. so lets
    // set up some stuff to track that state here.
@@ -296,7 +309,7 @@ module i2c_target
                  
                  if(post_ack_state == SEND_REGISTER_VALUE) begin
                     if (register_id_r < REGISTERS) begin
-                       register_value_r <= register_blob_i[(register_id_r*8) +: 8];
+                       register_value_r <= register_bytes_w[register_id_r];
                     end else begin
                        
                        // For now, swap nibbles
