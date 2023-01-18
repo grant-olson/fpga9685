@@ -1,22 +1,22 @@
 module i2c_target
   (
-   input            clk_i,
-   input            rst_ni,
+   input                      clk_i,
+   input                      rst_ni,
    
-   input [6:0]      assigned_address_i, // This is the address we respond to.
+   input [6:0]                assigned_address_i, // This is the address we respond to.
 
-   input            scl_i,
-   inout            sda_io,
+   input                      scl_i,
+   inout                      sda_io,
 
    // Register storage interface
-   output reg [7:0] write_register_id_o,
-   output reg [7:0] write_register_value_o,
-   output reg       write_enable_o,
-   input [0:2047]   register_blob_i,
+   output reg [7:0]           write_register_id_o,
+   output reg [7:0]           write_register_value_o,
+   output reg                 write_enable_o,
+   input [0:PCA_TOTAL_BITS-1] register_blob_i,
 
    // Software reset
-   output reg       soft_rst_no = 1'b1,
-   output reg       i2c_stopped = 1'b0
+   output reg                 soft_rst_no = 1'b1,
+   output reg                 i2c_stopped = 1'b0
    
    );
 
@@ -27,13 +27,13 @@ module i2c_target
 
    // Helper for memory. We can't pass in 2d array, so generate
    // out an easy-to-use access.
-   wire [7:0]   register_bytes_w[0:255];
+   wire [7:0]   register_bytes_w[0:PCA_TOTAL_REGISTERS-1];
 
    generate
       genvar    i;
       
-      for(i = 0; i < 256; i = i + 1) begin : make_bytes
-         assign register_bytes_w[i] = register_blob_i[i*8:i*8+7];
+      for(i = 0; i < PCA_TOTAL_REGISTERS; i = i + 1) begin : make_bytes
+         assign register_bytes_w[i] = register_blob_i[i*8 +: 8];
       end
    endgenerate
 
@@ -270,13 +270,19 @@ module i2c_target
                        // TODO: Should this force a NACK?
                        state <= IGNORE;
                        
-                    end else if (register_id_r < REGISTERS) begin
+                    end else if (register_id_r <= PCA_LED_15_OFF_H) begin
                        write_register_id_o <= register_id_r;
                        write_register_value_o <= {register_value_r[6:0], sda_io};
                        write_enable_o <= 1'b1;
                        
                        state <= ACK; 
-                    end
+                    end else if (register_id_r >= PCA_ALL_LED_ON_L) begin
+                       write_register_id_o <= register_id_r-PCA_HIGH_REG_OFFSET;
+                       write_register_value_o <= {register_value_r[6:0], sda_io};
+                       write_enable_o <= 1'b1;
+                       
+                       state <= ACK; 
+                    end else state <= IGNORE;
                     
                     // The AI register lets you write multiple
                     // sequential values in one i2c message packet.
@@ -308,8 +314,10 @@ module i2c_target
                  state <= post_ack_state;
                  
                  if(post_ack_state == SEND_REGISTER_VALUE) begin
-                    if (register_id_r < REGISTERS) begin
+                    if (register_id_r <= PCA_LED_15_OFF_H) begin
                        register_value_r <= register_bytes_w[register_id_r];
+                    end else if (register_id_r >= PCA_ALL_LED_ON_L) begin
+                       register_value_r <= register_bytes_w[register_id_r-PCA_HIGH_REG_OFFSET];
                     end else begin
                        
                        // For now, swap nibbles

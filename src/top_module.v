@@ -24,7 +24,7 @@ module top
    // Need a shared data store for other components to use
    wire [7:0]   write_register_id_w, write_register_value_w;
    wire         write_enable_w;
-   wire [0:2047] register_blob_w;
+   wire [0:PCA_TOTAL_BITS-1] register_blob_w;
    wire [0:511]  register_led_w;
 
    wire          i2c_soft_rst_nw, reg_data_rst_nw;
@@ -80,7 +80,7 @@ module top
    prescaled_counter counter (
                   .clk_i(prescale_clk_w),
                   .rst_ni(rst_ni),
-                  .prescale_value(register_blob_w[8'hFE*8:8'hFE*8+7]),
+                  .prescale_value(register_blob_w[(PCA_PRE_SCALE_INT*8) +: 8]),
                   .counter_ro(counter_w)
                   );
 

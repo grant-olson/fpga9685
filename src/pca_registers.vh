@@ -69,12 +69,26 @@ localparam PCA_LED_15_ON_H = 8'h43;
 localparam PCA_LED_15_OFF_L = 8'h44;
 localparam PCA_LED_15_OFF_H = 8'h45;
 // 0x46-0xF9 unused/reserved for future use
+// For 0xFA-0xFF this is Internal position in blob
+localparam PCA_ALL_LED_ON_L_INT = 8'h46;
+localparam PCA_ALL_LED_ON_H_INT = 8'h47;
+localparam PCA_ALL_LED_OFF_L_INT = 8'h48;
+localparam PCA_ALL_LED_OFF_H_INT = 8'h49;
+localparam PCA_PRE_SCALE_INT = 8'h4A;
+localparam PCA_TEST_MODE_INT = 8'h4B;
+
+// External register numbers
 localparam PCA_ALL_LED_ON_L = 8'hFA;
 localparam PCA_ALL_LED_ON_H = 8'hFB;
 localparam PCA_ALL_LED_OFF_L = 8'hFC;
 localparam PCA_ALL_LED_OFF_H = 8'hFD;
 localparam PCA_PRE_SCALE = 8'hFE;
 localparam PCA_TEST_MODE = 8'hFF;
+
+// Use this to Adcust for high bits
+localparam PCA_HIGH_REG_OFFSET = 8'hB4;
+localparam PCA_TOTAL_REGISTERS = PCA_TEST_MODE_INT + 1;
+localparam PCA_TOTAL_BITS = PCA_TOTAL_REGISTERS * 8;
 
 // Mode bits, as they sit in our big blob of data
 localparam PCA_MODE1_RESTART = 0;
@@ -93,94 +107,91 @@ localparam PCA_MODE2_OUTNE1 = 14;
 localparam PCA_MODE2_OUTNE0 = 15;
 
 // register defaults for 0x00-0x45
-localparam PCA_DEFAULT_VALUES_LOW = {
-                                     {8'b00010001}, // MODE 1
-                                     {8'b00000100}, // MODE 2
+localparam PCA_DEFAULT_VALUES = {
+                                 {8'b00010001}, // MODE 1
+                                 {8'b00000100}, // MODE 2
 
-                                     // Use first 7 bits for i2c address
-                                     {8'b11100010}, // SUBADR1 - 0x71
-                                     {8'b11100100}, // SUBADR2 - 0x72
-                                     {8'b11101000}, // SUBADR3 - 0x74
-                                     {8'b11100000}, // ALLCALL - 0X70
-                                     
-                                     {8'h00}, // LED 0 ON L
-                                     {8'h00}, // LED 0 ON H
-                                     {8'h00}, // LED 0 OFF L
-                                     {8'h10}, // LED 0 OFF H - start always off
-                                     {8'h00}, // LED 1 ON L
-                                     {8'h00}, // LED 1 ON H
-                                     {8'h00}, // LED 1 OFF L
-                                     {8'h10}, // LED 1 OFF H - start always off
-                                     {8'h00}, // LED 2 ON L
-                                     {8'h00}, // LED 2 ON H
-                                     {8'h00}, // LED 2 OFF L
-                                     {8'h10}, // LED 2 OFF H - start always off
-                                     {8'h00}, // LED 3 ON L
-                                     {8'h00}, // LED 3 ON H
-                                     {8'h00}, // LED 3 OFF L
-                                     {8'h10}, // LED 3 OFF H - start always off
-                                     {8'h00}, // LED 4 ON L
-                                     {8'h00}, // LED 4 ON H
-                                     {8'h00}, // LED 4 OFF L
-                                     {8'h10}, // LED 4 OFF H - start always off
-                                     {8'h00}, // LED 5 ON L
-                                     {8'h00}, // LED 5 ON H
-                                     {8'h00}, // LED 5 OFF L
-                                     {8'h10}, // LED 5 OFF H - start always off
-                                     {8'h00}, // LED 6 ON L
-                                     {8'h00}, // LED 6 ON H
-                                     {8'h00}, // LED 6 OFF L
-                                     {8'h10}, // LED 6 OFF H - start always off
-                                     {8'h00}, // LED 7 ON L
-                                     {8'h00}, // LED 7 ON H
-                                     {8'h00}, // LED 7 OFF L
-                                     {8'h10}, // LED 7 OFF H - start always off
-                                     {8'h00}, // LED 8 ON L
-                                     {8'h00}, // LED 8 ON H
-                                     {8'h00}, // LED 8 OFF L
-                                     {8'h10}, // LED 8 OFF H - start always off
-                                     {8'h00}, // LED 9 ON L
-                                     {8'h00}, // LED 9 ON H
-                                     {8'h00}, // LED 9 OFF L
-                                     {8'h10}, // LED 9 OFF H - start always off
-                                     {8'h00}, // LED 10 ON L
-                                     {8'h00}, // LED 10 ON H
-                                     {8'h00}, // LED 10 OFF L
-                                     {8'h10}, // LED 10 OFF H - start always off
-                                     {8'h00}, // LED 11 ON L
-                                     {8'h00}, // LED 11 ON H
-                                     {8'h00}, // LED 11 OFF L
-                                     {8'h10}, // LED 11 OFF H - start always off
-                                     {8'h00}, // LED 12 ON L
-                                     {8'h00}, // LED 12 ON H
-                                     {8'h00}, // LED 12 OFF L
-                                     {8'h10}, // LED 12 OFF H - start always off
-                                     {8'h00}, // LED 13 ON L
-                                     {8'h00}, // LED 13 ON H
-                                     {8'h00}, // LED 13 OFF L
-                                     {8'h10}, // LED 13 OFF H - start always off
-                                     {8'h00}, // LED 14 ON L
-                                     {8'h00}, // LED 14 ON H
-                                     {8'h00}, // LED 14 OFF L
-                                     {8'h10}, // LED 14 OFF H - start always off
-                                     {8'h00}, // LED 15 ON L
-                                     {8'h00}, // LED 15 ON H
-                                     {8'h00}, // LED 15 OFF L
-                                     {8'h10} // LED 15 OFF H - start always off
+                                 // Use first 7 bits for i2c address
+                                 {8'b11100010}, // SUBADR1 - 0x71
+                                 {8'b11100100}, // SUBADR2 - 0x72
+                                 {8'b11101000}, // SUBADR3 - 0x74
+                                 {8'b11100000}, // ALLCALL - 0X70
+
+                                 {8'h00}, // LED 0 ON L
+                                 {8'h00}, // LED 0 ON H
+                                 {8'h00}, // LED 0 OFF L
+                                 {8'h10}, // LED 0 OFF H - start always off
+                                 {8'h00}, // LED 1 ON L
+                                 {8'h00}, // LED 1 ON H
+                                 {8'h00}, // LED 1 OFF L
+                                 {8'h10}, // LED 1 OFF H - start always off
+                                 {8'h00}, // LED 2 ON L
+                                 {8'h00}, // LED 2 ON H
+                                 {8'h00}, // LED 2 OFF L
+                                 {8'h10}, // LED 2 OFF H - start always off
+                                 {8'h00}, // LED 3 ON L
+                                 {8'h00}, // LED 3 ON H
+                                 {8'h00}, // LED 3 OFF L
+                                 {8'h10}, // LED 3 OFF H - start always off
+                                 {8'h00}, // LED 4 ON L
+                                 {8'h00}, // LED 4 ON H
+                                 {8'h00}, // LED 4 OFF L
+                                 {8'h10}, // LED 4 OFF H - start always off
+                                 {8'h00}, // LED 5 ON L
+                                 {8'h00}, // LED 5 ON H
+                                 {8'h00}, // LED 5 OFF L
+                                 {8'h10}, // LED 5 OFF H - start always off
+                                 {8'h00}, // LED 6 ON L
+                                 {8'h00}, // LED 6 ON H
+                                 {8'h00}, // LED 6 OFF L
+                                 {8'h10}, // LED 6 OFF H - start always off
+                                 {8'h00}, // LED 7 ON L
+                                 {8'h00}, // LED 7 ON H
+                                 {8'h00}, // LED 7 OFF L
+                                 {8'h10}, // LED 7 OFF H - start always off
+                                 {8'h00}, // LED 8 ON L
+                                 {8'h00}, // LED 8 ON H
+                                 {8'h00}, // LED 8 OFF L
+                                 {8'h10}, // LED 8 OFF H - start always off
+                                 {8'h00}, // LED 9 ON L
+                                 {8'h00}, // LED 9 ON H
+                                 {8'h00}, // LED 9 OFF L
+                                 {8'h10}, // LED 9 OFF H - start always off
+                                 {8'h00}, // LED 10 ON L
+                                 {8'h00}, // LED 10 ON H
+                                 {8'h00}, // LED 10 OFF L
+                                 {8'h10}, // LED 10 OFF H - start always off
+                                 {8'h00}, // LED 11 ON L
+                                 {8'h00}, // LED 11 ON H
+                                 {8'h00}, // LED 11 OFF L
+                                 {8'h10}, // LED 11 OFF H - start always off
+                                 {8'h00}, // LED 12 ON L
+                                 {8'h00}, // LED 12 ON H
+                                 {8'h00}, // LED 12 OFF L
+                                 {8'h10}, // LED 12 OFF H - start always off
+                                 {8'h00}, // LED 13 ON L
+                                 {8'h00}, // LED 13 ON H
+                                 {8'h00}, // LED 13 OFF L
+                                 {8'h10}, // LED 13 OFF H - start always off
+                                 {8'h00}, // LED 14 ON L
+                                 {8'h00}, // LED 14 ON H
+                                 {8'h00}, // LED 14 OFF L
+                                 {8'h10}, // LED 14 OFF H - start always off
+                                 {8'h00}, // LED 15 ON L
+                                 {8'h00}, // LED 15 ON H
+                                 {8'h00}, // LED 15 OFF L
+                                 {8'h10}, // LED 15 OFF H - start always off
+                                 // These actually have higher addresses but we pack them.
+                                 {8'h00}, // ALL_LED_ON_L
+                                 {8'h10}, // ALL LED ON H
+                                 {8'h00}, // ALL LED OFF L
+                                 {8'h10}, // ALL LED OFF H
+                                 {8'h1E}, // PRE SCALE 20 Mhz
+                                 {8'hFF} // TEST? TODO: RIGHT NUMBER?
                                  };
 
 
 localparam PCA_LOW_MAX_REG = 8'h45;
-
-// Ignore a bunch of registers.
-// start back up at 0xFA
-localparam PCA_DEFAULT_VALUES_HIGH = {
-                                  {8'h00}, // ALL_LED_ON_L
-                                  {8'h10}, // ALL LED ON H
-                                  {8'h00}, // ALL LED OFF L
-                                  {8'h10}, // ALL LED OFF H
-                                  {8'h1E} // PRE SCALE 20 Mhz
-                                  };
 
 localparam PCA_HIGH_MIN_REG = 8'hFA;
 localparam PCA_HIGH_MAX_REG = 8'hFE;

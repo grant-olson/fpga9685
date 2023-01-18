@@ -1,5 +1,7 @@
 `define DF_OFFSET(DF) (DF-LED_0_ON_L);
 
+
+
 module register_data
   (
 
@@ -24,7 +26,7 @@ module register_data
    //
    // The real optimization would be to use proprietary BSRAM but then
    // we're tied to a chipset.
-   output reg [0:2047] register_blob_o,
+   output reg [0:PCA_TOTAL_BITS-1] register_blob_o,
 
    // Same storage as above, but these are the atomically updated
    // LED/PWM parameters that get updated only after all four bytes
@@ -35,6 +37,9 @@ module register_data
    output reg [0:511]  register_led_o
    );
 
+   `include "src/pca_registers.vh"
+
+   
    // For the actual LED params, we need to mark them as dirty,
    // then only update the values used by the PWM driver when
    // all four bytes have been updated.
@@ -44,9 +49,6 @@ module register_data
    reg [0:64]          dirty_flags_r;
    wire                led_reg_w;
 
-   `include "src/pca_registers.vh"
-
-   
    assign led_reg_w = (write_register_id_i >= PCA_LED_0_ON_L && 
                        write_register_id_i <= PCA_LED_15_OFF_H);
 
@@ -56,18 +58,7 @@ module register_data
    always @(posedge clk_i or negedge rst_ni) begin
       if(~rst_ni) begin
          // All the low default values
-         register_blob_o[0:PCA_LOW_MAX_REG*8+7] <= PCA_DEFAULT_VALUES_LOW;
-
-         // Unused, but without this the simulator things we have
-         // undefined values
-         register_blob_o[(PCA_LOW_MAX_REG+1)*8:(PCA_HIGH_MIN_REG-1)*8+7] <= {{1'b0}};
-
-         // All the high default values
-         register_blob_o[PCA_HIGH_MIN_REG*8:PCA_HIGH_MAX_REG*8+7] <= PCA_DEFAULT_VALUES_HIGH;
-
-         // Unused, but without this the simulator things we have
-         // undefined values
-         register_blob_o[(PCA_HIGH_MAX_REG+1)*8:(PCA_HIGH_MAX_REG+1)*8+7] <= {{1'b1}};
+         register_blob_o <= PCA_DEFAULT_VALUES;
 
          register_led_o <= {{1'b0}};
          dirty_flags_r <= {{1'b0}};
