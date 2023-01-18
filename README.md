@@ -27,9 +27,13 @@ Current implemented functionality:
     * `AI` Auto increment register counter to easily program sequentially.
         For example enable LED PWM signal with one i2c command instead of
         four: `i2cset -y 1 0x40 0x06 0x04 0x04 0x08 0x08 i`
+    * `SLEEP` Low power mode. Probably doesn't really save any power on
+        FPGA, but matches PCA9685 behavior.
 * `MODE2` options:
     * `INVRT` - invert PWM output.
     * `OUTDRV` - Open Drain or Not on LEDs.
+    * `OCH` - by default, update PWMs on i2c STOP, else do atomic commits
+        only when all four registers for an LED have been updates. 
     * `OUTNE` - When output disabled, do we send 1, 0, or high-impedance?
     * `EXTCLK` - use external clock instead of internal. Once set can't
         be unset barring a hardware or software reset.
@@ -39,10 +43,9 @@ Current implemented functionality:
 Todo:
 
 * `MODE1` options:
-    * `RESTART` Resume last PWM state after coming out of sleep.
-    * `SLEEP` Low power mode.
-        Partiallly implemented. Still needs RESTART logic.
-* `MODE2` option `OCH` only runs in output changes on ACK mode.
+    * `RESTART` I don't understand the behavior based on the datasheet
+        description. Need to test on a real PCA9685 to understand the
+        specified behavior.
 * **Power-On Reset** the real PCA9685 has hardware that forces a
     reset on power on, so the user doesn't need to manually deal
     with a reset pin.

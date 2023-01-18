@@ -30,13 +30,16 @@ module top
    wire          i2c_soft_rst_nw, reg_data_rst_nw;
    // If either one is low, do a reset.
    assign reg_data_rst_nw = i2c_soft_rst_nw & rst_ni;
-   
+
+   wire          i2c_stopped;
+
    register_data reg_data (
                            .clk_i(clk_i),
                            .rst_ni(reg_data_rst_nw),
                            .write_register_id_i(write_register_id_w),
                            .write_register_value_i(write_register_value_w),
                            .write_enable_i(write_enable_w),
+                           .i2c_stopped(i2c_stopped),
                            .register_blob_o(register_blob_w),
                            .register_led_o(register_led_w)
                            
@@ -293,7 +296,8 @@ module top
                   .write_enable_o(write_enable_w),
                   .register_blob_i(register_blob_w),
 
-                  .soft_rst_no(i2c_soft_rst_nw)
+                  .soft_rst_no(i2c_soft_rst_nw),
+                  .i2c_stopped(i2c_stopped)
                   
                   );
    

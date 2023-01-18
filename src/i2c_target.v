@@ -15,7 +15,8 @@ module i2c_target
    input [0:2047]   register_blob_i,
 
    // Software reset
-   output reg       soft_rst_no = 1'b1
+   output reg       soft_rst_no = 1'b1,
+   output reg       i2c_stopped = 1'b0
    
    );
 
@@ -325,8 +326,13 @@ module i2c_target
       else if (start_stop_edge) begin
          counter_r <= 0;
          
-         if (sda_io) state <= IGNORE; // Went LOW to HIGH - STOP
-         else state <= RECV_ADDRESS; // HIGH to LOW - START
+         if (sda_io) begin // Went LOW to HIGH - STOP
+            state <= IGNORE; 
+            i2c_stopped <= 1'b1;
+         end else begin // HIGH to LOW - START
+            state <= RECV_ADDRESS;
+            i2c_stopped <= 1'b0;
+         end
       
       end else if (~soft_rst_no) soft_rst_no <= 1'b1;
       
