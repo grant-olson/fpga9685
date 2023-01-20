@@ -68,6 +68,7 @@ module register_data
 
          register_led_o <= {{1'b0}};
          dirty_flags_r <= {{1'b0}};
+         clear_restart <= 1'b0;
          
       end else if (write_enable_i) begin
          register_blob_o[(write_register_id_i*8) +: 8] <= write_register_value_i[7:0];
