@@ -29,7 +29,7 @@ Current implemented functionality:
         four: `i2cset -y 1 0x40 0x06 0x04 0x04 0x08 0x08 i`
     * `SLEEP` Low power mode. Probably doesn't really save any power on
         FPGA, but matches PCA9685 behavior.
-    * `RESTART` Read detailed description of behavior
+    * `RESTART` See detailed description of behavior below.
     
 * `MODE2` options:
     * `INVRT` - invert PWM output.
@@ -82,7 +82,8 @@ behavior.
     we write a 1 to the `RESTART` bit. This acts as a trigger and clears
     the `RESTART` bit unpausing PWM signal generation.
 
-    NOTE: This is the only time a user can write to the register.
+    **NOTE:** This is the only time a controller is permitted to write
+    to the restart bit.
 5. Barring that, a change to the PWM settings will automatically set
     `RESTART` low and resume PWM signal generation. This happens when
     either:
