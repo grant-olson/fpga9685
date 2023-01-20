@@ -29,6 +29,8 @@ Current implemented functionality:
         four: `i2cset -y 1 0x40 0x06 0x04 0x04 0x08 0x08 i`
     * `SLEEP` Low power mode. Probably doesn't really save any power on
         FPGA, but matches PCA9685 behavior.
+    * `RESTART` Read detailed description of behavior
+    
 * `MODE2` options:
     * `INVRT` - invert PWM output.
     * `OUTDRV` - Open Drain or Not on LEDs.
@@ -42,10 +44,6 @@ Current implemented functionality:
 
 Todo:
 
-* `MODE1` options:
-    * `RESTART` I don't understand the behavior based on the datasheet
-        description. Need to test on a real PCA9685 to understand the
-        specified behavior.
 * **Power-On Reset** the real PCA9685 has hardware that forces a
     reset on power on, so the user doesn't need to manually deal
     with a reset pin.
@@ -66,6 +64,34 @@ for an individual FPGA in `src/top_module.v`.
 
 Note that you should avoid the the ALL CALL address `0x70` although it is
 physically possible to set this address via the pins.
+
+## MODE1 RESTART bit
+
+This has complicated behavior and the datasheet explanation is short.
+I've implemented what I believe the correct behavior is and compared
+to a real PCA9685. Here is my understanding of the `RESTART` bit
+behavior.
+
+1. When set to 1 this indicates we are *ready* to restart the
+    PWM circuitry with all old values. This also implies we are **paused**
+    because we have not actually restarted.
+2. Putting the device to `SLEEP` sets the `RESTART` bit high.
+3. Coming out of sleep will keep this high, meaning once again:
+    we are *ready* to restart but waiting a reason to come out of pausing.
+4. To indicate we are not paused, while we are **not** in `SLEEP` mode
+    we write a 1 to the `RESTART` bit. This acts as a trigger and clears
+    the `RESTART` bit unpausing PWM signal generation.
+
+    NOTE: This is the only time a user can write to the register.
+5. Barring that, a change to the PWM settings will automatically set
+    `RESTART` low and resume PWM signal generation. This happens when
+    either:
+
+    1. In default `OCH` mode, update on `STOP`, when a value is written
+        to any of the `LED_` registers, including `LED_ALL_` registers.
+    2. In `OCH` mode, update on `ACK` we have completed and atomic
+        update by writing to all 4 registers for a single PWM channel.
+6. Any system reset commands will also clear the bit.
 
 ## Clock and PreScale
 

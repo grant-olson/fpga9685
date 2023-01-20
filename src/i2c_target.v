@@ -243,18 +243,61 @@ module i2c_target
 
               RECV_REGISTER_VALUE: begin
 
-                 // Per the datasheet MODE0 Register, EXTCLK bit
-                 //  is sticky and can only be set once. 
+                 // Per the datasheet MODE0 Register there is
+                 // some magic register behavior.
+                 //
+                 // The RESTART bit is normally 0, set to 1
+                 // by the system when we transition in to SLEEP
+                 // mode, and set to 0 if it's 1 and the controller
+                 // sends 1 and we are not in SLEEP mode.
+                 //
+                 // EXTCLK bit is sticky and can only be set once. 
                  // Hack in a check here when extracting the value
                  // to enforce this behavior
                  if (register_id_r == 7'h00 && 
-                     counter_r == PCA_MODE1_EXTCLK + 1) begin
-                    register_value_r <= {
-                                         register_value_r[6:0], 
-                                         sda_io | 
-                                         register_blob_i[PCA_MODE1_EXTCLK]
-                                         };
-                 end else register_value_r <= {register_value_r[6:0], sda_io};
+                     counter_r == PCA_MODE1_RESTART + 1) begin
+                    // Do we clear out the RESTART bit?
+                    if (~register_blob_i[PCA_MODE1_SLEEP] & 
+                        register_blob_i[PCA_MODE1_RESTART] & sda_io) begin
+                       // Restart is 1, sent 1, set to zero
+                       register_value_r <= {
+                                            register_value_r[6:0],
+                                            1'b0};
+                    end else begin
+                       // Ignore user, persist value from register.
+                       register_value_r <= {
+                                            register_value_r[6:0],
+                                            register_blob_i[PCA_MODE1_RESTART]
+                                            };
+                     end
+                  end else if (register_id_r == 7'h00 && 
+                              counter_r == PCA_MODE1_EXTCLK + 1) begin
+                     // Keep EXTCLK bit sticky
+                     register_value_r <= {
+                                          register_value_r[6:0], 
+                                          sda_io | 
+                                          register_blob_i[PCA_MODE1_EXTCLK]
+                                          };
+                  end else if (register_id_r == 7'h00 && 
+                              counter_r == PCA_MODE1_SLEEP + 1) begin
+                     // Check to see if we're transitioning to SLEEP mode
+                     // which means we must set RESTART bit.
+                     if (~register_blob_i[PCA_MODE1_SLEEP] & sda_io) begin
+                        // transitioned to SLEEP, RESTART goes HIGH.
+                        register_value_r <= {
+                                             register_value_r[6:3],
+                                             1'b1,
+                                             register_value_r[1:0], 
+                                             sda_io
+                                             };
+                     end else begin
+                        // Nothing special for RESTART
+                        register_value_r <= {
+                                             register_value_r[6:0], 
+                                             sda_io
+                                             };
+                     end
+                  end else register_value_r <= {register_value_r[6:0], sda_io};
                  
                  if (counter_r == 8) begin
                     
@@ -274,8 +317,9 @@ module i2c_target
                        write_register_id_o <= register_id_r;
                        write_register_value_o <= {register_value_r[6:0], sda_io};
                        write_enable_o <= 1'b1;
-                       
-                       state <= ACK; 
+
+                       state <= ACK;
+
                     end else if (register_id_r >= PCA_ALL_LED_ON_L) begin
                        write_register_id_o <= register_id_r-PCA_HIGH_REG_OFFSET;
                        write_register_value_o <= {register_value_r[6:0], sda_io};
@@ -312,7 +356,7 @@ module i2c_target
               
               ACK: begin
                  state <= post_ack_state;
-                 
+
                  if(post_ack_state == SEND_REGISTER_VALUE) begin
                     if (register_id_r <= PCA_LED_15_OFF_H) begin
                        register_value_r <= register_bytes_w[register_id_r];

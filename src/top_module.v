@@ -57,8 +57,11 @@ module top
    wire [0:15]    pwm_w;
    
 
-   assign led_o = (register_blob_w[PCA_MODE1_SLEEP] | oe_ni) ? 
-                  led_oe_setting_r : pwm_w;
+   assign led_o = (
+                   register_blob_w[PCA_MODE1_SLEEP] | 
+                   register_blob_w[PCA_MODE1_RESTART] | 
+                   oe_ni
+                   ) ? led_oe_setting_r : pwm_w;
 
    always @(*) begin
       if (register_blob_w[PCA_MODE2_OUTNE1]) led_oe_setting_r = {{1'bz}};
